@@ -1,0 +1,28 @@
+---
+source: src/ui.rs
+expression: "rendered_game(DisplayProfile::default(), RunStatus::Victory)"
+---
+┌ The Ossuary ───────────────────────────────────────┐┌ Status ────────────────┐
+│                                                    ││GRAVE KNIGHT            │
+│                                ▓▓▓▓▓               ││HP      32/32           │
+│                             ··········             ││Armor   2               │
+│                            ▓··········▓            ││Cleave  Ready           │
+│                            ╬···········            ││                        │
+│                            ▓··········▓            ││Turn    0               │
+│                          ········@······▓          ││Seed    54347           │
+│                 ┌ Victory ─────────────────────────────────┐ v1              │
+│                 │YOU ESCAPED THE OSSUARY                   │ 9               │
+│                 │                                          │ None            │
+│                 │The Grave Knight returns to the dying     │                 │
+│                 │light.                                    │                 │
+│                 │                                          │                 │
+│                 │Press r for another descent or q to quit. │                 │
+│                 └──────────────────────────────────────────┘                 │
+│                                                    ││                        │
+│                                                    ││                        │
+└────────────────────────────────────────────────────┘└────────────────────────┘
+┌ Events ──────────────────────────────────────────────────────────────────────┐
+│The crypt waits in silence.                                                   │
+│You descend into the ossuary.                                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+Move/attack: arrows/hjklyubn  Wait: .  Cleave: a  Help: ?  Restart: r  Quit: q

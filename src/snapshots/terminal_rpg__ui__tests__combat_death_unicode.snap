@@ -1,0 +1,28 @@
+---
+source: src/ui.rs
+expression: "rendered_game(DisplayProfile::default(), RunStatus::Death)"
+---
+┌ The Ossuary ───────────────────────────────────────┐┌ Status ────────────────┐
+│                                                    ││GRAVE KNIGHT            │
+│                                ▓▓▓▓▓               ││HP      0/32            │
+│                             ··········             ││Armor   2               │
+│                            ▓··········▓            ││Cleave  Ready           │
+│                            ╬···········            ││                        │
+│                            ▓··········▓            ││Turn    0               │
+│                          ········@······▓          ││Seed    54347           │
+│                 ┌ Death ───────────────────────────────────┐ v1              │
+│                 │YOU DIED                                  │ 9               │
+│                 │                                          │ None            │
+│                 │The Ossuary claims another oath-bound     │                 │
+│                 │soul.                                     │                 │
+│                 │                                          │                 │
+│                 │Press r for another descent or q to quit. │                 │
+│                 └──────────────────────────────────────────┘                 │
+│                                                    ││                        │
+│                                                    ││                        │
+└────────────────────────────────────────────────────┘└────────────────────────┘
+┌ Events ──────────────────────────────────────────────────────────────────────┐
+│You descend into the ossuary.                                                 │
+│The Grave Knight falls.                                                       │
+└──────────────────────────────────────────────────────────────────────────────┘
+Move/attack: arrows/hjklyubn  Wait: .  Cleave: a  Help: ?  Restart: r  Quit: q

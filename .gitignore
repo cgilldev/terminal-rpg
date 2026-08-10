@@ -1,0 +1,15 @@
+# BEGIN local-agent-workflow
+.codex/
+.codex/local-agent/
+AGENTS.md
+AGENTS.md.bootstrap-backup.*
+.gitignore.bootstrap-backup.*
+.codex/skills.bootstrap-backup.*
+.codex/skills/*.bootstrap-backup.*
+# END local-agent-workflow
+
+# Local development SSH host key.
+.terminal-rpg/
+
+# Rust build output.
+/target/

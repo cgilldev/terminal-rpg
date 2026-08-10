@@ -1,0 +1,28 @@
+---
+source: src/ui.rs
+expression: "rendered_game_at(80, 24, DisplayProfile::default(), RunStatus::Active, true)"
+---
+┌ The Ossuary ───────────────────────────────────────┐┌ Status ────────────────┐
+│                                                    ││GRAVE KNIGHT            │
+│                                ▓▓▓▓▓               ││HP      32/32           │
+│                             ··········             ││Armor   2               │
+│                            ▓··········▓            ││Cleave  Ready           │
+│                            ╬···········            ││                        │
+│                            ▓··········▓            ││Turn    0               │
+│                ┌ Help ──────────────────────────────────────┐54347           │
+│                │Explore the Ossuary and reach >.            │v1              │
+│                │                                            │9               │
+│                │Movement and waiting consume turns. Bumping │None            │
+│                │+ opens a door. s Skeleton, g Ghoul, c      │                │
+│                │Cultist. ! lunge, * hex.                    │                │
+│                │                                            │                │
+│                │Press ? to return.                          │                │
+│                │                                            │                │
+│                └────────────────────────────────────────────┘                │
+│                                                    ││                        │
+└────────────────────────────────────────────────────┘└────────────────────────┘
+┌ Events ──────────────────────────────────────────────────────────────────────┐
+│The crypt waits in silence.                                                   │
+│You descend into the ossuary.                                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+Move/attack: arrows/hjklyubn  Wait: .  Cleave: a  Help: ?  Restart: r  Quit: q

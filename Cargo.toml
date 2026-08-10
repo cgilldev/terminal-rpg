@@ -1,0 +1,33 @@
+[package]
+name = "terminal-rpg"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97"
+description = "A dark-fantasy roguelike playable locally or over SSH"
+license = "MIT"
+
+[dependencies]
+anyhow = "1.0"
+clap = { version = "4.5", features = ["derive"] }
+crossterm = "0.29"
+rand = "0.9"
+rand_10 = { package = "rand", version = "0.10" }
+rand_chacha = "0.9"
+ratatui = "0.30"
+russh = "0.62"
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "2.0"
+tokio = { version = "1.53", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+
+[dev-dependencies]
+insta = "1.43"
+proptest = "1.7"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = "deny"
+pedantic = "deny"
