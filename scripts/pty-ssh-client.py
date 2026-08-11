@@ -141,7 +141,7 @@ def main() -> int:
 
         if args.spam:
             os.set_blocking(master, False)
-            payload = b"." * 64
+            payload = b"s" * 64
             for _ in range(args.spam):
                 try:
                     os.write(master, payload)
@@ -156,7 +156,7 @@ def main() -> int:
                 return_code = 0
             else:
                 os.set_blocking(master, True)
-                os.write(master, b"q")
+                os.write(master, b"Q")
                 status = drain_child(master, child, output, 5.0)
                 return_code = os.waitstatus_to_exitcode(status)
         else:
@@ -169,7 +169,7 @@ def main() -> int:
             for columns, rows in args.resize:
                 set_size(master, columns, rows)
                 read_activity(master, output)
-            os.write(master, b"q")
+            os.write(master, b"Q")
             status = drain_child(master, child, output, 5.0)
             return_code = os.waitstatus_to_exitcode(status)
     except (OSError, TimeoutError) as error:

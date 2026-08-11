@@ -64,11 +64,11 @@ if timeout 5 sftp -q -b /dev/null -P "$port" \
 fi
 
 # X11 is explicitly rejected while an otherwise valid game shell still works.
-{ sleep 0.2; printf q; } | env DISPLAY=:0 timeout 5 ssh -X -tt "${ssh_options[@]}" x11@127.0.0.1 >"$work_dir/x11.out" 2>&1
+{ sleep 0.2; printf Q; } | env DISPLAY=:0 timeout 5 ssh -X -tt "${ssh_options[@]}" x11@127.0.0.1 >"$work_dir/x11.out" 2>&1
 grep -aFq "X11 forwarding request failed" "$work_dir/x11.out"
 
 # Two concurrent, known-size PTY sessions receive only their own game state.
-python3 "$pty_client" --output "$work_dir/wait.out" --action . --resize 81x24 -- \
+python3 "$pty_client" --output "$work_dir/wait.out" --action s --resize 81x24 -- \
   ssh -tt "${ssh_options[@]}" wait-client@127.0.0.1 &
 wait_pid="$!"
 python3 "$pty_client" --output "$work_dir/help.out" --action '?' --resize 81x24 -- \
@@ -79,8 +79,8 @@ wait "$help_pid"
 perl -pe 's/\e\[[0-?]*[ -\/]*[@-~]//g' "$work_dir/wait.out" | tr -d '[:space:]' >"$work_dir/wait.text"
 perl -pe 's/\e\[[0-?]*[ -\/]*[@-~]//g' "$work_dir/help.out" | tr -d '[:space:]' >"$work_dir/help.text"
 grep -aFq "Turn1" "$work_dir/wait.text"
-! grep -aFq "ExploretheOssuaryandreach>." "$work_dir/wait.text"
-grep -aFq "ExploretheOssuaryandreach>." "$work_dir/help.text"
+! grep -aFq "?:close|r:restart|Q:quit" "$work_dir/wait.text"
+grep -aFq "?:close|r:restart|Q:quit" "$work_dir/help.text"
 ! grep -aFq "Turn1" "$work_dir/help.text"
 wait_seed="$(grep -aoE 'Seed[0-9]+' "$work_dir/wait.text" | head -1)"
 help_seed="$(grep -aoE 'Seed[0-9]+' "$work_dir/help.text" | head -1)"
@@ -96,7 +96,7 @@ grep -aFq "Thedungeonreformsaroundyou." "$work_dir/restart.text"
 test "$(grep -aoE 'Seed[0-9]+' "$work_dir/restart.text" | sort -u | wc -l)" -ge 2
 
 # Unsupported input is ignored without advancing the run.
-python3 "$pty_client" --output "$work_dir/malformed.out" --action x --resize 81x24 -- \
+python3 "$pty_client" --output "$work_dir/malformed.out" --action h --resize 81x24 -- \
   ssh -tt "${ssh_options[@]}" malformed-client@127.0.0.1
 perl -pe 's/\e\[[0-?]*[ -\/]*[@-~]//g' "$work_dir/malformed.out" | tr -d '[:space:]' >"$work_dir/malformed.text"
 grep -aFq "Turn0" "$work_dir/malformed.text"
@@ -109,7 +109,7 @@ python3 "$pty_client" --output "$work_dir/healthy.out" --action '?' --resize 81x
   ssh -tt "${ssh_options[@]}" healthy-client@127.0.0.1
 wait "$slow_pid"
 perl -pe 's/\e\[[0-?]*[ -\/]*[@-~]//g' "$work_dir/healthy.out" | tr -d '[:space:]' >"$work_dir/healthy.text"
-grep -aFq "ExploretheOssuaryandreach>." "$work_dir/healthy.text"
+grep -aFq "?:close|r:restart|Q:quit" "$work_dir/healthy.text"
 
 # Real window-change requests cross the minimum-size threshold both ways.
 python3 "$pty_client" --output "$work_dir/resize.typescript" \
@@ -122,9 +122,9 @@ last_game_offset="$(grep -abo 'GRAVEKNIGHT' "$work_dir/resize.text" | tail -1 | 
 test "$first_game_offset" -lt "$small_offset"
 test "$small_offset" -lt "$last_game_offset"
 
-# EOF without q releases the game channel while the listener stays healthy.
+# EOF without Q releases the game channel while the listener stays healthy.
 timeout 5 ssh -tt "${ssh_options[@]}" eof-client@127.0.0.1 </dev/null >"$work_dir/eof.out" 2>&1 || true
-{ sleep 0.2; printf q; } | timeout 5 ssh -tt "${ssh_options[@]}" reconnect-client@127.0.0.1 >"$work_dir/reconnect.out" 2>&1
+{ sleep 0.2; printf Q; } | timeout 5 ssh -tt "${ssh_options[@]}" reconnect-client@127.0.0.1 >"$work_dir/reconnect.out" 2>&1
 test -s "$work_dir/reconnect.out"
 
 test "$(stat -c '%a' "$work_dir/host-key")" = "600"

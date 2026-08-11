@@ -6,14 +6,14 @@ expression: "rendered_game(ascii, RunStatus::Active)"
 |                                                    ||GRAVE KNIGHT            |
 |                                #####               ||HP      32/32           |
 |                             ..........             ||Armor   2               |
-|                            #..........#            ||Cleave  Ready           |
-|                            +...........            ||                        |
-|                            #..........#            ||Turn    0               |
-|                          ........@......#          ||Seed    54347           |
+|                            #..........#            ||1 Cleave  Ready         |
+|                            +...........            ||2-0      Empty          |
+|                            #..........#            ||                        |
+|                          ........@......#          ||Turn    0               |
+|                            #..........#            ||Seed    54347           |
 |                            #..........#            ||Gen     v1              |
-|                            #..........#            ||Enemies 9               |
-|                            #..........             ||Threat  None            |
-|                                #####               ||                        |
+|                            #..........             ||Enemies 9               |
+|                                #####               ||Threat  None            |
 |                                                    ||                        |
 |                                                    ||                        |
 |                                                    ||                        |
@@ -25,4 +25,4 @@ expression: "rendered_game(ascii, RunStatus::Active)"
 |The crypt waits in silence.                                                   |
 |You descend into the ossuary.                                                 |
 +------------------------------------------------------------------------------+
-Move/attack: arrows/hjklyubn  Wait: .  Cleave: a  Help: ?  Restart: r  Quit: q
+Move qwe/asd/zxc + arrows | Skills 1:Cleave 2-0:Empty | ?:Help r:Restart Q:Quit

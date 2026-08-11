@@ -6,17 +6,17 @@ expression: "rendered_game(ascii, RunStatus::Death)"
 |                                                    ||GRAVE KNIGHT            |
 |                                #####               ||HP      0/32            |
 |                             ..........             ||Armor   2               |
-|                            #..........#            ||Cleave  Ready           |
-|                            +...........            ||                        |
-|                            #..........#            ||Turn    0               |
-|                          ........@......#          ||Seed    54347           |
-|                 + Death -----------------------------------+ v1              |
-|                 |YOU DIED                                  | 9               |
-|                 |                                          | None            |
-|                 |The Ossuary claims another oath-bound     |                 |
+|                            #..........#            ||1 Cleave  Ready         |
+|                            +...........            ||2-0      Empty          |
+|                            #..........#            ||                        |
+|                          ........@......#          ||Turn    0               |
+|                 + Death -----------------------------------+ 54347           |
+|                 |YOU DIED                                  | v1              |
+|                 |                                          | 9               |
+|                 |The Ossuary claims another oath-bound     | None            |
 |                 |soul.                                     |                 |
 |                 |                                          |                 |
-|                 |Press r for another descent or q to quit. |                 |
+|                 |Press r for another descent or Q to quit. |                 |
 |                 +------------------------------------------+                 |
 |                                                    ||                        |
 |                                                    ||                        |
@@ -25,4 +25,4 @@ expression: "rendered_game(ascii, RunStatus::Death)"
 |You descend into the ossuary.                                                 |
 |The Grave Knight falls.                                                       |
 +------------------------------------------------------------------------------+
-Move/attack: arrows/hjklyubn  Wait: .  Cleave: a  Help: ?  Restart: r  Quit: q
+Move qwe/asd/zxc + arrows | Skills 1:Cleave 2-0:Empty | ?:Help r:Restart Q:Quit

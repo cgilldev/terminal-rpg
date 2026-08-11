@@ -1,7 +1,7 @@
 //! Shared Ratatui game presentation and terminal input semantics.
 
 use crate::{
-    game::{Command, Direction, ExplorationGame, RunSeed, RunStatus},
+    game::{ActorKind, Command, Direction, ExplorationGame, RunSeed, RunStatus, Telegraph},
     world::{GenerationError, Position, Tile},
 };
 use crossterm::{
@@ -14,7 +14,7 @@ use ratatui::{
     Frame, Terminal,
     backend::CrosstermBackend,
     layout::{Constraint, Direction as LayoutDirection, Layout, Rect, Size},
-    style::{Modifier, Style},
+    style::{Color, Modifier, Style},
     symbols::border,
     text::{Line, Span},
     widgets::{Block, Borders, Clear, Paragraph, Wrap},
@@ -51,11 +51,96 @@ pub struct DisplayProfile {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum SemanticTone {
+    Plain,
+    Border,
+    Player,
+    Wall,
+    Floor,
+    Memory,
+    Door,
+    Exit,
+    Skeleton,
+    Ghoul,
+    Cultist,
+    Lunge,
+    Hex,
+    Health,
+    Danger,
+    Ready,
+    Cooldown,
+    Event,
+    Help,
+    Victory,
+    Death,
+    Title,
+    Muted,
+}
+
+fn semantic_style(profile: DisplayProfile, tone: SemanticTone) -> Style {
+    let modifier = match tone {
+        SemanticTone::Player
+        | SemanticTone::Exit
+        | SemanticTone::Lunge
+        | SemanticTone::Hex
+        | SemanticTone::Danger
+        | SemanticTone::Victory
+        | SemanticTone::Death
+        | SemanticTone::Title => Modifier::BOLD,
+        SemanticTone::Memory => Modifier::DIM,
+        _ => Modifier::empty(),
+    };
+    let style = Style::default().add_modifier(modifier);
+    if profile.no_color {
+        return style;
+    }
+    let color = match tone {
+        SemanticTone::Plain => return style,
+        SemanticTone::Border
+        | SemanticTone::Wall
+        | SemanticTone::Memory
+        | SemanticTone::Cooldown
+        | SemanticTone::Muted => Color::DarkGray,
+        SemanticTone::Player | SemanticTone::Skeleton => Color::White,
+        SemanticTone::Floor | SemanticTone::Event => Color::Gray,
+        SemanticTone::Door | SemanticTone::Ready | SemanticTone::Title => Color::Yellow,
+        SemanticTone::Exit | SemanticTone::Victory => Color::LightYellow,
+        SemanticTone::Ghoul | SemanticTone::Health => Color::Green,
+        SemanticTone::Cultist => Color::Magenta,
+        SemanticTone::Lunge | SemanticTone::Danger | SemanticTone::Death => Color::LightRed,
+        SemanticTone::Hex => Color::LightMagenta,
+        SemanticTone::Help => Color::LightCyan,
+    };
+    style.fg(color)
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct SkillSlot(u8);
+
+impl SkillSlot {
+    pub const CLEAVE: Self = Self(1);
+
+    #[must_use]
+    pub const fn new(number: u8) -> Option<Self> {
+        if number >= 1 && number <= 10 {
+            Some(Self(number))
+        } else {
+            None
+        }
+    }
+
+    #[must_use]
+    pub const fn number(self) -> u8 {
+        self.0
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Intent {
     Start,
     Move(Direction),
     Wait,
-    Cleave,
+    UseSkill(SkillSlot),
     ToggleHelp,
     Restart,
     Quit,
@@ -147,28 +232,7 @@ pub fn draw_game(frame: &mut Frame<'_>, game: &ExplorationGame, profile: Display
     let map_lines = exploration_map_lines(game, map_inner.width, map_inner.height, profile);
     frame.render_widget(Paragraph::new(map_lines).block(map_block), top[0]);
 
-    let status = vec![
-        Line::from(Span::styled(
-            "GRAVE KNIGHT",
-            Style::default().add_modifier(Modifier::BOLD),
-        )),
-        Line::from(format!(
-            "HP      {}/{}",
-            game.player.health, game.player.max_health
-        )),
-        Line::from(format!("Armor   {}", game.player.armor)),
-        Line::from(if game.cleave_cooldown == 0 {
-            "Cleave  Ready".to_owned()
-        } else {
-            format!("Cleave  {} turns", game.cleave_cooldown)
-        }),
-        Line::from(""),
-        Line::from(format!("Turn    {}", game.turn)),
-        Line::from(format!("Seed    {}", game.seed().0)),
-        Line::from(format!("Gen     v{}", game.generator_version())),
-        Line::from(format!("Enemies {}", game.hostiles.len())),
-        Line::from(threat_summary(game)),
-    ];
+    let status = status_lines(game, profile);
     frame.render_widget(
         Paragraph::new(status).block(panel(" Status ", profile)),
         top[1],
@@ -183,29 +247,100 @@ pub fn draw_game(frame: &mut Frame<'_>, game: &ExplorationGame, profile: Display
         .collect::<Vec<_>>()
         .join("\n");
     frame.render_widget(
-        Paragraph::new(events).block(panel(" Events ", profile)),
+        Paragraph::new(events)
+            .style(semantic_style(profile, SemanticTone::Event))
+            .block(panel(" Events ", profile)),
         vertical[1],
     );
     frame.render_widget(
         Paragraph::new(
-            "Move/attack: arrows/hjklyubn  Wait: .  Cleave: a  Help: ?  Restart: r  Quit: q",
-        ),
+            "Move qwe/asd/zxc + arrows | Skills 1:Cleave 2-0:Empty | ?:Help r:Restart Q:Quit",
+        )
+        .style(semantic_style(profile, SemanticTone::Muted)),
         vertical[2],
     );
 
     if game.help {
-        let popup = Rect::new(area.width / 2 - 23, area.height / 2 - 5, 46, 10);
+        let popup = Rect::new(area.width / 2 - 26, area.height / 2 - 6, 52, 12);
         frame.render_widget(Clear, popup);
         frame.render_widget(
             Paragraph::new(
-                "Explore the Ossuary and reach >.\n\nMovement and waiting consume turns. Bumping + opens a door. s Skeleton, g Ghoul, c Cultist. ! lunge, * hex.\n\nPress ? to return.",
+                "Reach >. Move qwe/asd/zxc or arrows; s waits.\nBump + doors. s Skeleton, g Ghoul, c Cultist.\n! lunge, * hex. Movement and waiting use turns.\n\nSkills: 1 Cleave | 2-0 Empty\n?: close | r: restart | Q: quit",
             )
+            .style(semantic_style(profile, SemanticTone::Help))
             .block(panel(" Help ", profile))
-            .wrap(Wrap { trim: true }),
+                .wrap(Wrap { trim: true }),
             popup,
         );
     }
     draw_run_outcome(frame, area, game.status, profile);
+}
+
+fn status_lines(game: &ExplorationGame, profile: DisplayProfile) -> Vec<Line<'static>> {
+    let health_tone = if game.player.health * 3 <= game.player.max_health {
+        SemanticTone::Danger
+    } else {
+        SemanticTone::Health
+    };
+    let cleave_tone = if game.cleave_cooldown == 0 {
+        SemanticTone::Ready
+    } else {
+        SemanticTone::Cooldown
+    };
+    vec![
+        Line::from(Span::styled(
+            "GRAVE KNIGHT",
+            semantic_style(profile, SemanticTone::Player),
+        )),
+        Line::styled(
+            format!("HP      {}/{}", game.player.health, game.player.max_health),
+            semantic_style(profile, health_tone),
+        ),
+        Line::styled(
+            format!("Armor   {}", game.player.armor),
+            semantic_style(profile, SemanticTone::Floor),
+        ),
+        Line::styled(
+            if game.cleave_cooldown == 0 {
+                "1 Cleave  Ready".to_owned()
+            } else {
+                format!("1 Cleave  {} turns", game.cleave_cooldown)
+            },
+            semantic_style(profile, cleave_tone),
+        ),
+        Line::styled(
+            "2-0      Empty",
+            semantic_style(profile, SemanticTone::Muted),
+        ),
+        Line::from(""),
+        Line::styled(
+            format!("Turn    {}", game.turn),
+            semantic_style(profile, SemanticTone::Muted),
+        ),
+        Line::styled(
+            format!("Seed    {}", game.seed().0),
+            semantic_style(profile, SemanticTone::Muted),
+        ),
+        Line::styled(
+            format!("Gen     v{}", game.generator_version()),
+            semantic_style(profile, SemanticTone::Muted),
+        ),
+        Line::styled(
+            format!("Enemies {}", game.hostiles.len()),
+            semantic_style(profile, SemanticTone::Muted),
+        ),
+        Line::styled(
+            threat_summary(game),
+            semantic_style(
+                profile,
+                if game.hostiles.iter().any(|actor| actor.telegraph.is_some()) {
+                    SemanticTone::Danger
+                } else {
+                    SemanticTone::Muted
+                },
+            ),
+        ),
+    ]
 }
 
 fn draw_run_outcome(frame: &mut Frame<'_>, area: Rect, status: RunStatus, profile: DisplayProfile) {
@@ -214,8 +349,9 @@ fn draw_run_outcome(frame: &mut Frame<'_>, area: Rect, status: RunStatus, profil
         frame.render_widget(Clear, popup);
         frame.render_widget(
             Paragraph::new(
-                "YOU ESCAPED THE OSSUARY\n\nThe Grave Knight returns to the dying light.\n\nPress r for another descent or q to quit.",
+                "YOU ESCAPED THE OSSUARY\n\nThe Grave Knight returns to the dying light.\n\nPress r for another descent or Q to quit.",
             )
+            .style(semantic_style(profile, SemanticTone::Victory))
             .block(panel(" Victory ", profile))
             .wrap(Wrap { trim: true }),
             popup,
@@ -225,8 +361,9 @@ fn draw_run_outcome(frame: &mut Frame<'_>, area: Rect, status: RunStatus, profil
         frame.render_widget(Clear, popup);
         frame.render_widget(
             Paragraph::new(
-                "YOU DIED\n\nThe Ossuary claims another oath-bound soul.\n\nPress r for another descent or q to quit.",
+                "YOU DIED\n\nThe Ossuary claims another oath-bound soul.\n\nPress r for another descent or Q to quit.",
             )
+            .style(semantic_style(profile, SemanticTone::Death))
             .block(panel(" Death ", profile))
             .wrap(Wrap { trim: true }),
             popup,
@@ -243,17 +380,26 @@ fn draw_title(frame: &mut Frame<'_>, area: Rect, game: &ExplorationGame, profile
     .split(area);
     frame.render_widget(
         Paragraph::new(vec![
-            Line::from("TERMINAL RPG"),
+            Line::styled("TERMINAL RPG", semantic_style(profile, SemanticTone::Title)),
             Line::from(""),
-            Line::from("A dark-fantasy descent into the Ossuary."),
+            Line::styled(
+                "A dark-fantasy descent into the Ossuary.",
+                semantic_style(profile, SemanticTone::Event),
+            ),
             Line::from(""),
-            Line::from(format!(
-                "Seed {}  Generator v{}",
-                game.seed().0,
-                game.generator_version()
-            )),
+            Line::styled(
+                format!(
+                    "Seed {}  Generator v{}",
+                    game.seed().0,
+                    game.generator_version()
+                ),
+                semantic_style(profile, SemanticTone::Muted),
+            ),
             Line::from(""),
-            Line::from("Press Enter to descend. Press q to quit."),
+            Line::styled(
+                "Press Enter to descend. Press Q to quit.",
+                semantic_style(profile, SemanticTone::Ready),
+            ),
         ])
         .block(panel(" The Grave Knight ", profile))
         .wrap(Wrap { trim: true }),
@@ -267,6 +413,7 @@ fn draw_small_terminal(frame: &mut Frame<'_>, area: Rect, profile: DisplayProfil
             "Terminal too small: {}x{}. Resize to at least {MIN_WIDTH}x{MIN_HEIGHT}. No turns pass while this message is shown.",
             area.width, area.height
         ))
+        .style(semantic_style(profile, SemanticTone::Danger))
         .block(panel(" Terminal RPG ", profile))
         .wrap(Wrap { trim: true }),
         area,
@@ -287,25 +434,38 @@ fn exploration_map_lines(
     let origin_y = (game.player.position.y - view_height / 2).clamp(0, max_y);
     (0..view_height)
         .map(|screen_y| {
-            let mut row = String::with_capacity(usize::from(width));
+            let mut spans = Vec::with_capacity(usize::from(width));
             for screen_x in 0..view_width {
                 let position = Position::new(origin_x + screen_x, origin_y + screen_y);
-                row.push(exploration_glyph(game, position, profile));
+                let (glyph, tone) = exploration_cell(game, position, profile);
+                spans.push(Span::styled(
+                    glyph.to_string(),
+                    semantic_style(profile, tone),
+                ));
             }
-            Line::from(row)
+            Line::from(spans)
         })
         .collect()
 }
 
+#[cfg(test)]
 fn exploration_glyph(game: &ExplorationGame, position: Position, profile: DisplayProfile) -> char {
+    exploration_cell(game, position, profile).0
+}
+
+fn exploration_cell(
+    game: &ExplorationGame,
+    position: Position,
+    profile: DisplayProfile,
+) -> (char, SemanticTone) {
     if game.is_visible(position) {
         if position == game.player.position {
-            return '@';
+            return ('@', SemanticTone::Player);
         }
         if let Some(telegraph) = game.telegraph_at(position) {
             return match telegraph {
-                crate::game::Telegraph::GhoulLunge { .. } => '!',
-                crate::game::Telegraph::CultistHex { .. } => '*',
+                Telegraph::GhoulLunge { .. } => ('!', SemanticTone::Lunge),
+                Telegraph::CultistHex { .. } => ('*', SemanticTone::Hex),
             };
         }
         if let Some(actor) = game
@@ -314,35 +474,35 @@ fn exploration_glyph(game: &ExplorationGame, position: Position, profile: Displa
             .find(|actor| actor.position == position)
         {
             return match (actor.kind, actor.telegraph.is_some()) {
-                (crate::game::ActorKind::Skeleton, _) => 's',
-                (crate::game::ActorKind::Ghoul, false) => 'g',
-                (crate::game::ActorKind::Ghoul, true) => 'G',
-                (crate::game::ActorKind::Cultist, false) => 'c',
-                (crate::game::ActorKind::Cultist, true) => 'C',
-                (crate::game::ActorKind::GraveKnight, _) => '@',
+                (ActorKind::Skeleton, _) => ('s', SemanticTone::Skeleton),
+                (ActorKind::Ghoul, false) => ('g', SemanticTone::Ghoul),
+                (ActorKind::Ghoul, true) => ('G', SemanticTone::Lunge),
+                (ActorKind::Cultist, false) => ('c', SemanticTone::Cultist),
+                (ActorKind::Cultist, true) => ('C', SemanticTone::Hex),
+                (ActorKind::GraveKnight, _) => ('@', SemanticTone::Player),
             };
         }
         return match game.map.tile(position) {
-            Some(Tile::Wall) if profile.ascii => '#',
-            Some(Tile::Wall) => '▓',
-            Some(Tile::Floor) if profile.ascii => '.',
-            Some(Tile::Floor) => '·',
-            Some(Tile::ClosedDoor) if profile.ascii => '+',
-            Some(Tile::ClosedDoor) => '╬',
-            Some(Tile::OpenDoor) => '/',
-            Some(Tile::Exit) => '>',
-            None => ' ',
+            Some(Tile::Wall) if profile.ascii => ('#', SemanticTone::Wall),
+            Some(Tile::Wall) => ('▓', SemanticTone::Wall),
+            Some(Tile::Floor) if profile.ascii => ('.', SemanticTone::Floor),
+            Some(Tile::Floor) => ('·', SemanticTone::Floor),
+            Some(Tile::ClosedDoor) if profile.ascii => ('+', SemanticTone::Door),
+            Some(Tile::ClosedDoor) => ('╬', SemanticTone::Door),
+            Some(Tile::OpenDoor) => ('/', SemanticTone::Door),
+            Some(Tile::Exit) => ('>', SemanticTone::Exit),
+            None => (' ', SemanticTone::Plain),
         };
     }
     if game.is_explored(position) {
         return match game.map.tile(position) {
-            Some(Tile::Wall) if profile.ascii => '%',
-            Some(Tile::Wall) => '░',
-            Some(_) => ',',
-            None => ' ',
+            Some(Tile::Wall) if profile.ascii => ('%', SemanticTone::Memory),
+            Some(Tile::Wall) => ('░', SemanticTone::Memory),
+            Some(_) => (',', SemanticTone::Memory),
+            None => (' ', SemanticTone::Plain),
         };
     }
-    ' '
+    (' ', SemanticTone::Plain)
 }
 
 fn threat_summary(game: &ExplorationGame) -> String {
@@ -414,7 +574,7 @@ pub fn apply_game_intent(
         Intent::Wait if !game.help => {
             game.apply(Command::Wait);
         }
-        Intent::Cleave if !game.help => {
+        Intent::UseSkill(SkillSlot::CLEAVE) if !game.help => {
             game.apply(Command::UseCleave);
         }
         _ => {}
@@ -423,7 +583,10 @@ pub fn apply_game_intent(
 }
 
 fn panel(title: &'static str, profile: DisplayProfile) -> Block<'static> {
-    let block = Block::default().title(title).borders(Borders::ALL);
+    let block = Block::default()
+        .title(title)
+        .borders(Borders::ALL)
+        .border_style(semantic_style(profile, SemanticTone::Border));
     if profile.ascii {
         block.border_set(ASCII_BORDER)
     } else {
@@ -531,19 +694,20 @@ fn intent_from_key(code: KeyCode) -> Option<Intent> {
 fn intent_from_byte(byte: u8) -> Option<Intent> {
     Some(match byte {
         b'\r' | b'\n' => Intent::Start,
-        b'k' => Intent::Move(Direction::North),
-        b'u' => Intent::Move(Direction::NorthEast),
-        b'l' => Intent::Move(Direction::East),
-        b'n' => Intent::Move(Direction::SouthEast),
-        b'j' => Intent::Move(Direction::South),
-        b'b' => Intent::Move(Direction::SouthWest),
-        b'h' => Intent::Move(Direction::West),
-        b'y' => Intent::Move(Direction::NorthWest),
-        b'.' => Intent::Wait,
-        b'a' => Intent::Cleave,
+        b'q' => Intent::Move(Direction::NorthWest),
+        b'w' => Intent::Move(Direction::North),
+        b'e' => Intent::Move(Direction::NorthEast),
+        b'a' => Intent::Move(Direction::West),
+        b's' => Intent::Wait,
+        b'd' => Intent::Move(Direction::East),
+        b'z' => Intent::Move(Direction::SouthWest),
+        b'x' => Intent::Move(Direction::South),
+        b'c' => Intent::Move(Direction::SouthEast),
+        b'1'..=b'9' => Intent::UseSkill(SkillSlot(byte - b'0')),
+        b'0' => Intent::UseSkill(SkillSlot(10)),
         b'?' => Intent::ToggleHelp,
         b'r' => Intent::Restart,
-        b'q' => Intent::Quit,
+        b'Q' => Intent::Quit,
         _ => return None,
     })
 }
@@ -564,6 +728,17 @@ mod tests {
         status: RunStatus,
         help: bool,
     ) -> String {
+        let terminal = game_terminal_at(width, height, profile, status, help);
+        terminal_text(&terminal, width, height)
+    }
+
+    fn game_terminal_at(
+        width: u16,
+        height: u16,
+        profile: DisplayProfile,
+        status: RunStatus,
+        help: bool,
+    ) -> Terminal<TestBackend> {
         let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
         let mut game = ExplorationGame::new(Some(RunSeed(0xD4_4B))).unwrap();
         game.start();
@@ -576,10 +751,15 @@ mod tests {
         terminal
             .draw(|frame| draw_game(frame, &game, profile))
             .unwrap();
-        terminal_text(&terminal, width, height)
+        terminal
     }
 
     fn rendered_enemy_showcase(profile: DisplayProfile) -> String {
+        let terminal = enemy_showcase_terminal(profile);
+        terminal_text(&terminal, 80, 24)
+    }
+
+    fn enemy_showcase_terminal(profile: DisplayProfile) -> Terminal<TestBackend> {
         let mut terminal = Terminal::new(TestBackend::new(80, 24)).unwrap();
         let mut game = ExplorationGame::new(Some(RunSeed(0xD4_4B))).unwrap();
         game.start();
@@ -615,7 +795,7 @@ mod tests {
         terminal
             .draw(|frame| draw_game(frame, &game, profile))
             .unwrap();
-        terminal_text(&terminal, 80, 24)
+        terminal
     }
 
     fn terminal_text(terminal: &Terminal<TestBackend>, width: u16, height: u16) -> String {
@@ -632,24 +812,102 @@ mod tests {
             .join("\n")
     }
 
+    fn assert_rendered_text_color(terminal: &Terminal<TestBackend>, text: &str, expected: Color) {
+        let buffer = terminal.backend().buffer();
+        let characters = text.chars().collect::<Vec<_>>();
+        let text_width = u16::try_from(characters.len()).expect("test text fits terminal width");
+        for y in 0..buffer.area.height {
+            for x in 0..=buffer.area.width.saturating_sub(text_width) {
+                let matches = (0..text_width).all(|offset| {
+                    buffer[(x + offset, y)].symbol() == characters[usize::from(offset)].to_string()
+                });
+                if matches {
+                    assert!(
+                        (0..text_width).all(|offset| buffer[(x + offset, y)].fg == expected),
+                        "{text:?} was not entirely rendered with {expected:?}"
+                    );
+                    return;
+                }
+            }
+        }
+        panic!("rendered buffer did not contain {text:?}");
+    }
+
     #[test]
-    fn decoder_handles_partial_arrows_and_ignores_unknown_input() {
+    fn decoder_maps_spatial_movement_arrows_skills_and_quit() {
         let mut decoder = InputDecoder::default();
+        assert_eq!(
+            decoder.feed(b"qwea"),
+            [
+                Intent::Move(Direction::NorthWest),
+                Intent::Move(Direction::North),
+                Intent::Move(Direction::NorthEast),
+                Intent::Move(Direction::West),
+            ]
+        );
+        assert_eq!(
+            decoder.feed(b"sdzx"),
+            [
+                Intent::Wait,
+                Intent::Move(Direction::East),
+                Intent::Move(Direction::SouthWest),
+                Intent::Move(Direction::South),
+            ]
+        );
+        assert_eq!(decoder.feed(b"c"), [Intent::Move(Direction::SouthEast)]);
+
         assert!(decoder.feed(b"\x1b[").is_empty());
         assert_eq!(decoder.feed(b"A"), vec![Intent::Move(Direction::North)]);
-        assert_eq!(decoder.feed(b"x.a"), vec![Intent::Wait, Intent::Cleave]);
+        for (suffix, direction) in [
+            (b'B', Direction::South),
+            (b'C', Direction::East),
+            (b'D', Direction::West),
+        ] {
+            assert!(decoder.feed(b"\x1b[").is_empty());
+            assert_eq!(decoder.feed(&[suffix]), [Intent::Move(direction)]);
+        }
+
+        assert_eq!(
+            decoder.feed(b"1234"),
+            [
+                Intent::UseSkill(SkillSlot::new(1).unwrap()),
+                Intent::UseSkill(SkillSlot::new(2).unwrap()),
+                Intent::UseSkill(SkillSlot::new(3).unwrap()),
+                Intent::UseSkill(SkillSlot::new(4).unwrap()),
+            ]
+        );
+        assert_eq!(
+            decoder.feed(b"5678"),
+            [
+                Intent::UseSkill(SkillSlot::new(5).unwrap()),
+                Intent::UseSkill(SkillSlot::new(6).unwrap()),
+                Intent::UseSkill(SkillSlot::new(7).unwrap()),
+                Intent::UseSkill(SkillSlot::new(8).unwrap()),
+            ]
+        );
+        assert_eq!(
+            decoder.feed(b"90"),
+            [
+                Intent::UseSkill(SkillSlot::new(9).unwrap()),
+                Intent::UseSkill(SkillSlot::new(10).unwrap()),
+            ]
+        );
+        assert_eq!(decoder.feed(b"Q"), [Intent::Quit]);
+        assert!(decoder.feed(b"hjklyubn.").is_empty());
+        assert_eq!(SkillSlot::new(0), None);
+        assert_eq!(SkillSlot::new(11), None);
     }
 
     #[test]
     fn decoder_bounds_spam_linearly_and_recovers_for_later_input() {
         let mut decoder = InputDecoder::default();
-        let spam = vec![b'.'; MAX_INPUT_BYTES_PER_FEED * 8];
+        let spam = vec![b's'; MAX_INPUT_BYTES_PER_FEED * 8];
         let intents = decoder.feed(&spam);
         assert_eq!(intents.len(), MAX_INTENTS_PER_FEED);
         assert!(intents.iter().all(|intent| *intent == Intent::Wait));
-        assert_eq!(decoder.feed(b"q"), [Intent::Quit]);
+        assert_eq!(decoder.feed(b"Q"), [Intent::Quit]);
 
-        let unknown = vec![b'x'; MAX_INPUT_BYTES_PER_FEED * 8];
+        let unknown = vec![b'h'; MAX_INPUT_BYTES_PER_FEED * 8];
         assert!(decoder.feed(&unknown).is_empty());
         assert!(decoder.feed(b"\x1b[").is_empty());
         assert_eq!(decoder.feed(b"A"), [Intent::Move(Direction::North)]);
@@ -720,6 +978,118 @@ mod tests {
             rendered_game_at(60, 20, profile, RunStatus::Active, false),
         ] {
             assert!(output.is_ascii(), "strict ASCII output contained Unicode");
+        }
+    }
+
+    #[test]
+    fn semantic_palette_colors_representative_game_elements() {
+        let profile = DisplayProfile::default();
+        assert_eq!(
+            semantic_style(profile, SemanticTone::Player).fg,
+            Some(Color::White)
+        );
+        assert_eq!(
+            semantic_style(profile, SemanticTone::Door).fg,
+            Some(Color::Yellow)
+        );
+        assert_eq!(
+            semantic_style(profile, SemanticTone::Exit).fg,
+            Some(Color::LightYellow)
+        );
+        assert_eq!(
+            semantic_style(profile, SemanticTone::Ghoul).fg,
+            Some(Color::Green)
+        );
+        assert_eq!(
+            semantic_style(profile, SemanticTone::Cultist).fg,
+            Some(Color::Magenta)
+        );
+        assert_eq!(
+            semantic_style(profile, SemanticTone::Lunge).fg,
+            Some(Color::LightRed)
+        );
+        assert_eq!(
+            semantic_style(profile, SemanticTone::Hex).fg,
+            Some(Color::LightMagenta)
+        );
+
+        let terminal = game_terminal_at(80, 24, profile, RunStatus::Active, false);
+        let player = terminal
+            .backend()
+            .buffer()
+            .content
+            .iter()
+            .find(|cell| cell.symbol() == "@")
+            .expect("the rendered game contains the player");
+        assert_eq!(player.fg, Color::White);
+        assert!(player.modifier.contains(Modifier::BOLD));
+        assert_rendered_text_color(&terminal, "HP      32/32", Color::Green);
+        assert_rendered_text_color(&terminal, "1 Cleave  Ready", Color::Yellow);
+        assert_rendered_text_color(&terminal, "You descend into the ossuary.", Color::Gray);
+
+        let help = game_terminal_at(80, 24, profile, RunStatus::Active, true);
+        assert_rendered_text_color(&help, "Reach >.", Color::LightCyan);
+        let victory = game_terminal_at(80, 24, profile, RunStatus::Victory, false);
+        assert_rendered_text_color(&victory, "YOU ESCAPED THE OSSUARY", Color::LightYellow);
+        let death = game_terminal_at(80, 24, profile, RunStatus::Death, false);
+        assert_rendered_text_color(&death, "YOU DIED", Color::LightRed);
+
+        let showcase = enemy_showcase_terminal(profile);
+        for (symbol, expected) in [
+            ("s", Color::White),
+            ("G", Color::LightRed),
+            ("C", Color::LightMagenta),
+            ("▓", Color::DarkGray),
+        ] {
+            assert!(
+                showcase
+                    .backend()
+                    .buffer()
+                    .content
+                    .iter()
+                    .any(|cell| cell.symbol() == symbol && cell.fg == expected),
+                "the showcase contains {symbol} with {expected:?}"
+            );
+        }
+
+        let no_color = DisplayProfile {
+            no_color: true,
+            ..profile
+        };
+        assert_eq!(
+            rendered_game(profile, RunStatus::Active),
+            rendered_game(no_color, RunStatus::Active),
+            "color must not change rendered glyphs or labels"
+        );
+        assert_eq!(
+            rendered_enemy_showcase(profile),
+            rendered_enemy_showcase(no_color),
+            "color must not change enemy or telegraph glyphs"
+        );
+    }
+
+    #[test]
+    fn no_color_profile_resets_all_foreground_and_background_colors() {
+        let profile = DisplayProfile {
+            ascii: true,
+            no_color: true,
+        };
+        for terminal in [
+            game_terminal_at(80, 24, profile, RunStatus::Active, false),
+            game_terminal_at(80, 24, profile, RunStatus::Active, true),
+            enemy_showcase_terminal(profile),
+            game_terminal_at(60, 20, profile, RunStatus::Active, false),
+            game_terminal_at(80, 24, profile, RunStatus::Victory, false),
+            game_terminal_at(80, 24, profile, RunStatus::Death, false),
+        ] {
+            assert!(
+                terminal
+                    .backend()
+                    .buffer()
+                    .content
+                    .iter()
+                    .all(|cell| { cell.fg == Color::Reset && cell.bg == Color::Reset })
+            );
         }
     }
 
@@ -857,6 +1227,54 @@ mod tests {
         let small = Size::new(60, 20);
         assert!(!intent_allowed_at_size(Intent::Wait, small));
         assert!(intent_allowed_at_size(Intent::Quit, small));
+    }
+
+    #[test]
+    fn skill_slots_dispatch_cleave_and_empty_slots_are_free() {
+        let mut empty_slots = ExplorationGame::new(Some(RunSeed(33))).unwrap();
+        empty_slots.start();
+        let unchanged = empty_slots.clone();
+        for number in 2..=10 {
+            assert!(
+                apply_game_intent(
+                    &mut empty_slots,
+                    Intent::UseSkill(SkillSlot::new(number).unwrap()),
+                )
+                .unwrap()
+            );
+        }
+        assert_eq!(empty_slots, unchanged);
+
+        let mut cleave = ExplorationGame::new(Some(RunSeed(44))).unwrap();
+        cleave.start();
+        let adjacent = [
+            Direction::North,
+            Direction::East,
+            Direction::South,
+            Direction::West,
+        ]
+        .into_iter()
+        .map(|direction| {
+            let (dx, dy) = direction.delta();
+            cleave.player.position.offset(dx, dy)
+        })
+        .find(|position| cleave.map.tile(*position).is_some_and(Tile::is_walkable))
+        .expect("the generated start has an adjacent floor");
+        cleave.hostiles.clear();
+        cleave.spawn_hostile(ActorKind::Skeleton, adjacent, 20, 1, 1);
+
+        assert!(apply_game_intent(&mut cleave, Intent::UseSkill(SkillSlot::CLEAVE)).unwrap());
+        assert_eq!(cleave.turn, 1);
+        assert_eq!(cleave.cleave_cooldown, crate::game::CLEAVE_COOLDOWN_TURNS);
+        assert!(
+            cleave
+                .events
+                .iter()
+                .any(|event| event == "You unleash Cleave.")
+        );
+        let on_cooldown = cleave.clone();
+        assert!(apply_game_intent(&mut cleave, Intent::UseSkill(SkillSlot::CLEAVE)).unwrap());
+        assert_eq!(cleave, on_cooldown);
     }
 
     #[test]

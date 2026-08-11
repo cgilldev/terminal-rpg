@@ -33,6 +33,10 @@ cargo run --release -- play --seed 12345
 The effective seed and generator version are shown in the game. An explicitly
 seeded restart repeats that seed; an unseeded restart creates a fresh run.
 
+The default presentation uses a restrained ANSI dark-fantasy palette. Gameplay
+information is also carried by glyphs and labels, so color is never required.
+Use `--no-color` to suppress all foreground and background colors.
+
 For terminals without Unicode or color support:
 
 ```sh
@@ -44,16 +48,26 @@ cargo run --release -- play --ascii --no-color
 | Action | Keys |
 | --- | --- |
 | Start | `Enter` |
-| Move or bump-attack | Arrow keys for cardinal movement; `h j k l y u b n` for eight directions |
-| Wait | `.` |
-| Cleave adjacent enemies | `a` |
+| Move or bump-attack | `q w e / a d / z x c` for eight directions; arrow keys for cardinal movement |
+| Wait | `s` |
+| Skill slot 1: Cleave | `1` |
+| Empty skill slots | `2` through `0` (reserved; no turn consumed) |
 | Toggle help | `?` |
 | Restart | `r` |
-| Quit | `q` |
+| Quit | `Shift+Q` |
+
+The spatial movement layout is:
+
+```text
+q w e
+a s d
+z x c
+```
 
 Movement and waiting consume a turn. Bumping a closed door opens it permanently,
-consumes one turn, and leaves the player in place. Invalid terrain moves, help,
-and commands received while the terminal is below 80×24 do not consume turns.
+consumes one turn, and leaves the player in place. Invalid terrain moves, empty
+skill slots, help, and commands received while the terminal is below 80×24 do
+not consume turns.
 
 ## Serve over SSH
 
@@ -104,13 +118,14 @@ cargo fmt --all -- --check
 cargo clippy --all-targets --all-features -- -D warnings
 cargo test --all-targets --all-features
 cargo build --all-features
-python3 scripts/verify-local.py -- target/debug/terminal-rpg play --seed 12345 --ascii --no-color
+python3 scripts/verify-local.py --expect-color -- target/debug/terminal-rpg play --seed 12345
+python3 scripts/verify-local.py --expect-no-color -- target/debug/terminal-rpg play --seed 12345 --ascii --no-color
 bash scripts/verify-ssh.sh
 git diff --check
 ```
 
 The local smoke uses a real pseudo-terminal and verifies title-to-game entry,
-quit, terminal attributes, cursor restorati///ron, and alternate-screen cleanup. The
+quit, terminal attributes, cursor restoration, and alternate-screen cleanup. The
 SSH smoke exercises request rejection, independent concurrent games, restart,
 malformed input, slow clients, resize transitions, disconnect/reconnect, and
 stable host identity.

@@ -5,6 +5,7 @@ import argparse
 import errno
 import fcntl
 import os
+import re
 import select
 import signal
 import struct
@@ -17,6 +18,21 @@ ENTER_ALTERNATE_SCREEN = b"\x1b[?1049h"
 LEAVE_ALTERNATE_SCREEN = b"\x1b[?1049l"
 HIDE_CURSOR = b"\x1b[?25l"
 SHOW_CURSOR = b"\x1b[?25h"
+SGR_PATTERN = re.compile(rb"\x1b\[([0-9;]*)m")
+
+
+def contains_color_sgr(output: bytes) -> bool:
+    for match in SGR_PATTERN.finditer(output):
+        parameters = [int(value) for value in match.group(1).split(b";") if value]
+        if any(
+            value in (38, 48)
+            or 30 <= value <= 37
+            or 40 <= value <= 47
+            or 90 <= value <= 107
+            for value in parameters
+        ):
+            return True
+    return False
 
 
 def read_chunk(fd: int, output: bytearray, timeout: float) -> bool:
@@ -60,6 +76,9 @@ def drain_to_eof(fd: int, output: bytearray) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
+    expectation = parser.add_mutually_exclusive_group()
+    expectation.add_argument("--expect-color", action="store_true")
+    expectation.add_argument("--expect-no-color", action="store_true")
     parser.add_argument("command", nargs=argparse.REMAINDER)
     args = parser.parse_args()
     command = args.command[1:] if args.command[:1] == ["--"] else args.command
@@ -78,6 +97,9 @@ def main() -> int:
             os.dup2(slave, target)
         if slave > 2:
             os.close(slave)
+        if args.expect_color:
+            os.environ.pop("NO_COLOR", None)
+            os.environ.setdefault("TERM", "xterm-256color")
         os.execvp(command[0], command)
 
     output = bytearray()
@@ -87,7 +109,7 @@ def main() -> int:
         read_until(master, output, b"TERMINAL", 5.0)
         os.write(master, b"\r")
         read_until(master, output, b"GRAVE", 5.0)
-        os.write(master, b"q")
+        os.write(master, b"Q")
         status = wait_for_exit(master, child, output, 5.0)
 
         restored_attributes = termios.tcgetattr(slave)
@@ -105,6 +127,11 @@ def main() -> int:
         leave = output.rfind(LEAVE_ALTERNATE_SCREEN)
         if not (0 <= enter < hide < show < leave):
             raise RuntimeError("alternate-screen or cursor restoration sequence is incomplete")
+        has_color = contains_color_sgr(bytes(output))
+        if args.expect_color and not has_color:
+            raise RuntimeError("colored local game emitted no ANSI colors")
+        if args.expect_no_color and has_color:
+            raise RuntimeError("--no-color local game emitted ANSI colors")
     except (OSError, RuntimeError, TimeoutError) as error:
         print(error, file=sys.stderr)
         if status is None:
