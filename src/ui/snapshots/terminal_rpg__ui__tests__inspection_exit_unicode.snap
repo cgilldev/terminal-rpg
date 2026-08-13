@@ -1,0 +1,28 @@
+---
+source: src/ui/mod.rs
+expression: "terminal_text(&terminal, 80, 24)"
+---
+┌ The Ossuary ───────────────────────────────────────┐┌ Inspect ───────────────┐
+│                                    ▓··········▓    ││INSPECT                 │
+│                                    ▓··········     ││7,16  VISIBLE           │
+│                                        ▓▓▓▓▓       ││                        │
+│                                                    ││Stair to Dying Light    │
+│                                                    ││The only path out of the│
+│                                                    ││ossuary.                │
+│                                                    ││                        │
+│                                                    ││                        │
+│       >                                            ││                        │
+│                                                    ││                        │
+│                                                    ││                        │
+│                                                    ││                        │
+│                                                    ││                        │
+│                                                    ││                        │
+│                                                    ││                        │
+│                                                    ││                        │
+│                                                    ││                        │
+└────────────────────────────────────────────────────┘└────────────────────────┘
+┌ Events ──────────────────────────────────────────────────────────────────────┐
+│The crypt waits in silence.                                                   │
+│You descend into the ossuary.                                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+INSPECT Move keys | i/Esc exit | ?:Help r:Restart Q:Quit

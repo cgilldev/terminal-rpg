@@ -1,0 +1,28 @@
+---
+source: src/ui/mod.rs
+expression: "terminal_text(&terminal, 80, 24)"
+---
+┌ The Ossuary ───────────────────────────────────────┐┌ Inspect ───────────────┐
+│                                                    ││INSPECT                 │
+│                                                    ││44,18  VISIBLE          │
+│                                                    ││                        │
+│                                        ·           ││Crypt Floor             │
+│                                        ·           ││Dust lies thick across  │
+│                                        ·           ││worn flagstones.        │
+│                                      ▓▓·▓▓         ││                        │
+│                                    †·······        ││Health Potion           │
+│                                    ¡·······        ││A bitter crimson draught│
+│                                   ▓········▓       ││that knits wounded      │
+│                                   ▓········▓       ││flesh.                  │
+│                                   ▓····@···▓       ││                        │
+│                                   ▓········▓       ││                        │
+│                                   ▓········▓       ││                        │
+│                                    ········        ││                        │
+│                                      ▓▓▓▓▓         ││                        │
+│                                                    ││                        │
+└────────────────────────────────────────────────────┘└────────────────────────┘
+┌ Events ──────────────────────────────────────────────────────────────────────┐
+│The crypt waits in silence.                                                   │
+│You descend into the ossuary.                                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+INSPECT Move keys | i/Esc exit | ?:Help r:Restart Q:Quit

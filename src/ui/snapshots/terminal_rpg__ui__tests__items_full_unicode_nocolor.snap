@@ -1,0 +1,28 @@
+---
+source: src/ui/mod.rs
+expression: "terminal_text(&terminal, 80, 24)"
+---
+┌ The Ossuary ───────────────────────────────────────┐┌ Status ────────────────┐
+│                                                    ││GRAVE KNIGHT            │
+│                                                    ││                        │
+│                                        ·           ││HP ██████████ 32/32     │
+│                                        ·           ││MP ██████████ 10/10     │
+│                                        ·           ││Armor 2                 │
+│                                      ▓▓·▓▓         ││1 Cleave M3 Ready       │
+│                                    †·······        ││2 Grave Bolt M4 Ready   │
+│                                    ¡·······        ││3 Empty  4 Empty        │
+│                                   ▓········▓       ││5 Empty  6 Empty        │
+│                                   ▓········▓       ││7 Empty  8 Empty        │
+│                                   ▓····@···▓       ││9 Empty  0 Empty        │
+│                                   ▓········▓       ││I1 Grave Torch  I2      │
+│                                   ▓········▓       ││Health Potion           │
+│                                    ········        ││I3 Grave Torch  I4      │
+│                                      ▓▓▓▓▓         ││Health Potion           │
+│                                                    ││T0  Seed 6112           │
+│                                                    ││Foes 0  Threat  None    │
+└────────────────────────────────────────────────────┘└────────────────────────┘
+┌ Events ──────────────────────────────────────────────────────────────────────┐
+│The crypt waits in silence.                                                   │
+│You descend into the ossuary.                                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+Move qwe/asd/zxc | 1-0 Skills | g:Get u:Use i:Inspect ?:Help Q:Quit

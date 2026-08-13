@@ -1,0 +1,28 @@
+---
+source: src/ui/mod.rs
+expression: "terminal_text(&terminal, 80, 24)"
+---
+┌ The Ossuary ───────────────────────────────────────┐┌ Inspect ───────────────┐
+│                                                    ││INSPECT                 │
+│                                ▓▓▓▓▓               ││34,6  VISIBLE           │
+│                             ··········             ││                        │
+│                            ▓··········▓            ││Crypt Floor             │
+│                            ╬···········            ││Dust lies thick across  │
+│                            ▓··········▓            ││worn flagstones.        │
+│                          C·······@······▓          ││                        │
+│                            ▓··········▓            ││Cultist #10             │
+│                            ▓··········▓            ││HP 9/9  Armor 0  Dormant│
+│                            ▓··········             ││A grave-priest weaving  │
+│                                ▓▓▓▓▓               ││distant hexes.          │
+│                                                    ││                        │
+│                                                    ││Cultist Hex             │
+│                                                    ││A death-hex coils toward│
+│                                                    ││its chosen tile.        │
+│                                                    ││                        │
+│                                                    ││                        │
+└────────────────────────────────────────────────────┘└────────────────────────┘
+┌ Events ──────────────────────────────────────────────────────────────────────┐
+│The crypt waits in silence.                                                   │
+│You descend into the ossuary.                                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+INSPECT Move keys | i/Esc exit | ?:Help r:Restart Q:Quit

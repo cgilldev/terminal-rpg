@@ -79,6 +79,9 @@ def main() -> int:
     expectation = parser.add_mutually_exclusive_group()
     expectation.add_argument("--expect-color", action="store_true")
     expectation.add_argument("--expect-no-color", action="store_true")
+    parser.add_argument("--exercise-targeting", action="store_true")
+    parser.add_argument("--exercise-items", action="store_true")
+    parser.add_argument("--exercise-potion", action="store_true")
     parser.add_argument("command", nargs=argparse.REMAINDER)
     args = parser.parse_args()
     command = args.command[1:] if args.command[:1] == ["--"] else args.command
@@ -109,6 +112,34 @@ def main() -> int:
         read_until(master, output, b"TERMINAL", 5.0)
         os.write(master, b"\r")
         read_until(master, output, b"GRAVE", 5.0)
+        if args.exercise_items:
+            for key in b"dxxxxxxdxxxg":
+                os.write(master, bytes((key,)))
+                time.sleep(0.03)
+            read_until(master, output, b"Grave Torch", 5.0)
+            os.write(master, b"u")
+            read_until(master, output, b"USE ITEM", 5.0)
+            os.write(master, b"1")
+            time.sleep(0.05)
+            os.write(master, b"\x1b")
+            time.sleep(0.1)
+        if args.exercise_potion:
+            for key in b"dxxxxxxdxxxxxxg":
+                os.write(master, bytes((key,)))
+                time.sleep(0.03)
+            read_until(master, output, b"Health Potion", 5.0)
+            os.write(master, b"u1")
+            read_until(master, output, b"drink the Health Potion", 5.0)
+        os.write(master, b"i")
+        read_until(master, output, b"INSPECT", 5.0)
+        os.write(master, b"\x1b")
+        time.sleep(0.1)
+        if args.exercise_targeting:
+            os.write(master, b"2")
+            read_until(master, output, b"TARGETING", 5.0)
+            os.write(master, b"\t")
+            os.write(master, b"\r")
+            read_until(master, output, b"Grave Bolt strikes", 5.0)
         os.write(master, b"Q")
         status = wait_for_exit(master, child, output, 5.0)
 

@@ -1,0 +1,28 @@
+---
+source: src/ui/mod.rs
+expression: "terminal_text(&terminal, 80, 24)"
+---
+┌ The Ossuary ───────────────────────────────────────┐┌ Target ────────────────┐
+│                                                    ││TARGETING               │
+│                                        ▓▓▓▓▓       ││Grave Bolt              │
+│                                     ··········     ││                        │
+│                                    ▓··········▓    ││Cursor 5,2              │
+│                                    ╬···········    ││Out of range            │
+│                                    ▓··········▓    ││                        │
+│                                  ··s·····@······▓  ││Move qwe/asd/zxc        │
+│                                    ▓··········▓    ││or arrow keys           │
+│                                    ▓··········▓    ││Tab / Shift-Tab         │
+│                                    ▓··········     ││cycle targets           │
+│                                        ▓▓▓▓▓       ││Enter confirms          │
+│                                                    ││Esc or skill cancels    │
+│                                                    ││                        │
+│                                                    ││                        │
+│                                                    ││                        │
+│                                                    ││                        │
+│                                                    ││                        │
+└────────────────────────────────────────────────────┘└────────────────────────┘
+┌ Events ──────────────────────────────────────────────────────────────────────┐
+│The crypt waits in silence.                                                   │
+│You descend into the ossuary.                                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+TARGET Move keys | Tab cycle | Enter fire | Esc/2 cancel | Q quit

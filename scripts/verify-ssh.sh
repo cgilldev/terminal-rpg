@@ -7,11 +7,16 @@ pty_client="$repo_root/scripts/pty-ssh-client.py"
 port="${TERMINAL_RPG_TEST_PORT:-22239}"
 work_dir="$(mktemp -d)"
 server_pid=""
+potion_server_pid=""
 
 cleanup() {
   if [ -n "$server_pid" ]; then
     kill "$server_pid" 2>/dev/null || true
     wait "$server_pid" 2>/dev/null || true
+  fi
+  if [ -n "$potion_server_pid" ]; then
+    kill "$potion_server_pid" 2>/dev/null || true
+    wait "$potion_server_pid" 2>/dev/null || true
   fi
   rm -rf "$work_dir"
 }
@@ -25,6 +30,7 @@ fi
 "$binary" serve \
   --listen "127.0.0.1:$port" \
   --host-key "$work_dir/host-key" \
+  --seed 29 \
   --ascii --no-color >"$work_dir/server.log" 2>&1 &
 server_pid="$!"
 
@@ -86,14 +92,70 @@ wait_seed="$(grep -aoE 'Seed[0-9]+' "$work_dir/wait.text" | head -1)"
 help_seed="$(grep -aoE 'Seed[0-9]+' "$work_dir/help.text" | head -1)"
 test -n "$wait_seed"
 test -n "$help_seed"
-test "$wait_seed" != "$help_seed"
+test "$wait_seed" = "Seed29"
+test "$help_seed" = "Seed29"
 
 # An SSH restart creates a fresh run and remains playable.
 python3 "$pty_client" --output "$work_dir/restart.out" --action r --resize 81x24 -- \
   ssh -tt "${ssh_options[@]}" restart-client@127.0.0.1
 perl -pe 's/\e\[[0-?]*[ -\/]*[@-~]//g' "$work_dir/restart.out" | tr -d '[:space:]' >"$work_dir/restart.text"
 grep -aFq "Thedungeonreformsaroundyou." "$work_dir/restart.text"
-test "$(grep -aoE 'Seed[0-9]+' "$work_dir/restart.text" | sort -u | wc -l)" -ge 2
+test "$(grep -aoE 'Seed[0-9]+' "$work_dir/restart.text" | sort -u)" = "Seed29"
+
+# Targeting crosses the real SSH/PTTY boundary, including fragmented arrows and
+# Shift-Tab, then confirms exactly one Grave Bolt turn.
+python3 "$pty_client" --output "$work_dir/targeting.out" --action 2 \
+  --fragment $'\x1b' --fragment '[C' --fragment $'\x1b[' --fragment Z --fragment $'\r' --resize 81x24 -- \
+  ssh -tt "${ssh_options[@]}" targeting-client@127.0.0.1
+perl -pe 's/\e\[[0-?]*[ -\/]*[@-~]//g' "$work_dir/targeting.out" | tr -d '[:space:]' >"$work_dir/targeting.text"
+grep -aFq "GraveBoltstrikes" "$work_dir/targeting.text"
+grep -aFq "Turn1" "$work_dir/targeting.text"
+
+# Item-use mode and fragmented Escape cross the real SSH boundary without a turn.
+python3 "$pty_client" --output "$work_dir/items.out" --action u \
+  --fragment $'\x1b' --resize 81x24 -- \
+  ssh -tt "${ssh_options[@]}" items-client@127.0.0.1
+perl -pe 's/\e\[[0-?]*[ -\/]*[@-~]//g' "$work_dir/items.out" | tr -d '[:space:]' >"$work_dir/items.text"
+grep -aFq "USEITEM" "$work_dir/items.text"
+grep -aFq "Turn0" "$work_dir/items.text"
+
+# A second deterministic listener proves pickup and successful potion use over SSH.
+potion_port="$((port + 1))"
+"$binary" serve --listen "127.0.0.1:$potion_port" \
+  --host-key "$work_dir/potion-host-key" --seed 4 --ascii --no-color \
+  >"$work_dir/potion-server.log" 2>&1 &
+potion_server_pid="$!"
+for _ in $(seq 1 50); do
+  if ssh-keyscan -T 1 -p "$potion_port" 127.0.0.1 >/dev/null 2>&1; then break; fi
+  sleep 0.1
+done
+python3 "$pty_client" --output "$work_dir/potion.out" \
+  --action dxxx --fragment xxxd --fragment xxxx --fragment xxg --fragment u1 --resize 81x24 -- \
+  ssh -tt -p "$potion_port" "${ssh_options[@]:2}" potion-client@127.0.0.1
+perl -pe 's/\e\[[0-?]*[ -\/]*[@-~]//g' "$work_dir/potion.out" | tr -d '[:space:]' >"$work_dir/potion.text"
+grep -aFq "HealthPotion" "$work_dir/potion.text"
+grep -aFq "drinktheHealthPotion" "$work_dir/potion.text"
+
+# Inspection uses the same fragmented cursor path and a resize proves the moved
+# coordinate is present in a complete redraw.
+python3 "$pty_client" --output "$work_dir/inspect-move.out" --action i \
+  --fragment $'\x1b' --fragment '[C' --resize 81x24 -- \
+  ssh -tt "${ssh_options[@]}" inspect-move-client@127.0.0.1
+perl -pe 's/\e\[[0-?]*[ -\/]*[@-~]//g' "$work_dir/inspect-move.out" | tr -d '[:space:]' >"$work_dir/inspect-move.text"
+test "$(grep -aoE '[0-9]+,[0-9]+VISIBLE' "$work_dir/inspect-move.text" | sort -u | wc -l)" -ge 2
+
+# A standalone fragmented Escape exits inspection and remains turn-free.
+python3 "$pty_client" --output "$work_dir/inspect.out" --action i \
+  --fragment $'\x1b' --resize 81x24 -- \
+  ssh -tt "${ssh_options[@]}" inspect-client@127.0.0.1
+perl -pe 's/\e\[[0-?]*[ -\/]*[@-~]//g' "$work_dir/inspect.out" | tr -d '[:space:]' >"$work_dir/inspect.text"
+grep -aFq "INSPECT" "$work_dir/inspect.text"
+grep -aFq "Turn0" "$work_dir/inspect.text"
+last_inspect_offset="$(grep -abo 'INSPECT' "$work_dir/inspect.text" | tail -1 | cut -d: -f1)"
+last_status_offset="$(grep -abo 'Status' "$work_dir/inspect.text" | tail -1 | cut -d: -f1)"
+last_turn_offset="$(grep -abo 'Turn0' "$work_dir/inspect.text" | tail -1 | cut -d: -f1)"
+test "$last_inspect_offset" -lt "$last_status_offset"
+test "$last_inspect_offset" -lt "$last_turn_offset"
 
 # Unsupported input is ignored without advancing the run.
 python3 "$pty_client" --output "$work_dir/malformed.out" --action h --resize 81x24 -- \

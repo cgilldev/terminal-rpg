@@ -117,6 +117,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", required=True)
     parser.add_argument("--action", default="")
+    parser.add_argument("--fragment", action="append", default=[])
     parser.add_argument("--columns", type=int, default=80)
     parser.add_argument("--rows", type=int, default=24)
     parser.add_argument("--resize", action="append", type=parse_size, default=[])
@@ -166,6 +167,12 @@ def main() -> int:
                 read_activity(master, output)
                 if len(output) == before:
                     raise TimeoutError("action produced no output")
+            for fragment in args.fragment:
+                os.write(master, fragment.encode())
+                time.sleep(0.005)
+                read_chunk(master, output, 0.001)
+            if args.fragment:
+                drain_until_quiet(master, output)
             for columns, rows in args.resize:
                 set_size(master, columns, rows)
                 read_activity(master, output)

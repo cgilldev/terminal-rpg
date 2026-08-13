@@ -1,0 +1,28 @@
+---
+source: src/ui/mod.rs
+expression: "rendered_game_at(80, 24, ascii, RunStatus::Active, true)"
+---
++ The Ossuary ---------------------------------------++ Status ----------------+
+|                                                    ||GRAVE KNIGHT            |
+|                                #####               ||                        |
+|                             ..........             ||HP [##########] 32/32   |
+|                            #..........#            ||MP [##########] 10/10   |
+|                            +...........            ||Armor 2                 |
+|             + Help --------------------------------------------+ Ready       |
+|             |Reach >. Move qwe/asd/zxc or arrows; s waits.     |t M4 Ready   |
+|             |Bump + doors. s Skeleton, g Ghoul, c Cultist.     |Empty        |
+|             |! lunge, * hex. Movement and waiting use turns.   |Empty        |
+|             |                                                  |Empty        |
+|             |g picks up; u then 1-4 uses an item.              |Empty        |
+|             |?: close | r: restart | Q: quit                   |2 Empty      |
+|             |                                                  |4 Empty      |
+|             |                                                  |347          |
+|             |                                                  |eat  None    |
+|             |                                                  |             |
+|             +--------------------------------------------------+             |
++----------------------------------------------------++------------------------+
++ Events ----------------------------------------------------------------------+
+|The crypt waits in silence.                                                   |
+|You descend into the ossuary.                                                 |
++------------------------------------------------------------------------------+
+Move qwe/asd/zxc | 1-0 Skills | g:Get u:Use i:Inspect ?:Help Q:Quit

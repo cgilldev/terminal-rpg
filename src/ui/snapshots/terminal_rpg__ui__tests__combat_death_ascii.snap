@@ -1,0 +1,28 @@
+---
+source: src/ui/mod.rs
+expression: "rendered_game(ascii, RunStatus::Death)"
+---
++ The Ossuary ---------------------------------------++ Status ----------------+
+|                                                    ||GRAVE KNIGHT            |
+|                                #####               ||                        |
+|                             ..........             ||HP [----------] 0/32    |
+|                            #..........#            ||MP [##########] 10/10   |
+|                            +...........            ||Armor 2                 |
+|                            #..........#            ||1 Cleave M3 Ready       |
+|                          ........@......#          ||2 Grave Bolt M4 Ready   |
+|                 + Death -----------------------------------+  4 Empty        |
+|                 |YOU DIED                                  |  6 Empty        |
+|                 |                                          |  8 Empty        |
+|                 |The Ossuary claims the Grave Knight.      |  0 Empty        |
+|                 |                                          |y  I2 Empty      |
+|                 |Press r for another descent or Q to quit. |y  I4 Empty      |
+|                 |                                          |d 54347          |
+|                 +------------------------------------------+ Threat  None    |
+|                                                    ||                        |
+|                                                    ||                        |
++----------------------------------------------------++------------------------+
++ Events ----------------------------------------------------------------------+
+|You descend into the ossuary.                                                 |
+|The Grave Knight falls.                                                       |
++------------------------------------------------------------------------------+
+Move qwe/asd/zxc | 1-0 Skills | g:Get u:Use i:Inspect ?:Help Q:Quit

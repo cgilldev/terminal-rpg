@@ -3,10 +3,11 @@ use std::{net::SocketAddr, path::PathBuf, process::ExitCode};
 use anyhow::{Context, Result};
 use clap::{Args, Parser, Subcommand};
 use terminal_rpg::{
-    app::{AppMode, PlayOptions, ServeOptions},
+    app::{AppMode, PlayOptions, ServeOptions, WebOptions},
     game::RunSeed,
     server::{DEFAULT_HOST_KEY, DEFAULT_LISTEN, validate_host_key_path},
     ui::DisplayProfile,
+    web::DEFAULT_WEB_LISTEN,
 };
 use tracing::info;
 use tracing_subscriber::EnvFilter;
@@ -24,6 +25,8 @@ enum CliCommand {
     Play(PlayArgs),
     /// Serve independent game sessions over SSH.
     Serve(ServeArgs),
+    /// Serve independent game sessions in a browser terminal viewport.
+    Web(WebArgs),
 }
 
 #[derive(Debug, Args)]
@@ -34,6 +37,9 @@ struct PlayArgs {
 
     #[command(flatten)]
     display: DisplayArgs,
+
+    #[arg(long, help = "Enable development-only godmode toggle")]
+    debug_godmode: bool,
 }
 
 #[derive(Debug, Args)]
@@ -46,8 +52,32 @@ struct ServeArgs {
     #[arg(long, default_value = DEFAULT_HOST_KEY)]
     host_key: PathBuf,
 
+    /// Reproduce the same run for every development test session.
+    #[arg(long)]
+    seed: Option<u64>,
+
     #[command(flatten)]
     display: DisplayArgs,
+
+    #[arg(long, help = "Enable development-only godmode toggle")]
+    debug_godmode: bool,
+}
+
+#[derive(Debug, Args)]
+struct WebArgs {
+    /// Address for the unauthenticated development web server.
+    #[arg(long, default_value = DEFAULT_WEB_LISTEN)]
+    listen: SocketAddr,
+
+    /// Reproduce the same run for every development test session.
+    #[arg(long)]
+    seed: Option<u64>,
+
+    #[command(flatten)]
+    display: DisplayArgs,
+
+    #[arg(long, help = "Enable development-only godmode toggle")]
+    debug_godmode: bool,
 }
 
 #[derive(Debug, Args)]
@@ -96,23 +126,37 @@ fn run(cli: Cli) -> Result<()> {
         CliCommand::Play(args) => AppMode::Play(PlayOptions {
             seed: args.seed.map(RunSeed),
             display: args.display.into(),
+            debug_godmode: args.debug_godmode,
         }),
         CliCommand::Serve(args) => {
             validate_host_key_path(&args.host_key).context("invalid server configuration")?;
             AppMode::Serve(ServeOptions {
                 listen: args.listen,
                 host_key: args.host_key,
+                seed: args.seed.map(RunSeed),
                 display: args.display.into(),
+                debug_godmode: args.debug_godmode,
             })
         }
+        CliCommand::Web(args) => AppMode::Web(WebOptions {
+            listen: args.listen,
+            seed: args.seed.map(RunSeed),
+            display: args.display.into(),
+            debug_godmode: args.debug_godmode,
+        }),
     };
 
     info!(?mode, "mode configured");
     match mode {
-        AppMode::Play(options) => terminal_rpg::ui::run_local(options.seed, options.display)
-            .context("run local terminal game"),
+        AppMode::Play(options) => {
+            terminal_rpg::ui::run_local(options.seed, options.display, options.debug_godmode)
+                .context("run local terminal game")
+        }
         AppMode::Serve(options) => tokio::runtime::Runtime::new()
             .context("create Tokio runtime")?
             .block_on(terminal_rpg::server::serve(options)),
+        AppMode::Web(options) => tokio::runtime::Runtime::new()
+            .context("create Tokio runtime")?
+            .block_on(terminal_rpg::web::serve(options)),
     }
 }

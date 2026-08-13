@@ -1,0 +1,28 @@
+---
+source: src/ui/mod.rs
+expression: "terminal_text(&terminal, 80, 24)"
+---
+┌ The Ossuary ───────────────────────────────────────┐┌ Inspect ───────────────┐
+│                                                    ││INSPECT                 │
+│                                ▓▓▓▓▓               ││42,6  VISIBLE           │
+│                             ··········             ││                        │
+│                            ▓··········▓            ││Crypt Floor             │
+│                            ╬···········            ││Dust lies thick across  │
+│             ┌ Help ────────────────────────────────────────────┐ones.        │
+│             │INSPECTING                                        │             │
+│             │Move qwe/asd/zxc or arrows.                       │t #0         │
+│             │Visible tiles reveal current entities and omens.  │rmor 2       │
+│             │Remembered tiles reveal terrain only; unknown     │             │
+│             │tiles reveal nothing.                             │nd warrior   │
+│             │i or Esc exits. Inspection uses no turn.          │inst the     │
+│             │                                                  │             │
+│             │?: close help | Q: quit                           │             │
+│             │                                                  │             │
+│             │                                                  │             │
+│             └──────────────────────────────────────────────────┘             │
+└────────────────────────────────────────────────────┘└────────────────────────┘
+┌ Events ──────────────────────────────────────────────────────────────────────┐
+│The crypt waits in silence.                                                   │
+│You descend into the ossuary.                                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
+INSPECT Move keys | i/Esc exit | ?:Help r:Restart Q:Quit

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Terminal RPG</title>
+  <link rel="stylesheet" href="/vendor/xterm-6.0.0.css">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Terminal RPG</h1>
+      <div class="connection">
+        <span id="status" role="status" aria-live="polite">Connecting…</span>
+        <button id="touch-toggle" type="button" aria-controls="touch-controls" aria-expanded="false">Controls</button>
+        <button id="reconnect" type="button" hidden>Reconnect</button>
+      </div>
+    </header>
+    <section id="terminal-shell" aria-label="Terminal RPG game viewport">
+      <div id="terminal"></div>
+    </section>
+    <section id="touch-controls" aria-label="Game touch controls" hidden>
+      <div class="touch-heading">
+        <strong>Touch controls</strong>
+        <button id="touch-hide" type="button">Hide controls</button>
+      </div>
+      <div class="touch-layout">
+        <div class="touch-pad" aria-label="Movement controls">
+          <button type="button" data-input="q" aria-label="Move north-west">↖</button>
+          <button type="button" data-input="w" aria-label="Move north">↑</button>
+          <button type="button" data-input="e" aria-label="Move north-east">↗</button>
+          <button type="button" data-input="a" aria-label="Move west">←</button>
+          <button type="button" data-input="s" aria-label="Wait">Wait</button>
+          <button type="button" data-input="d" aria-label="Move east">→</button>
+          <button type="button" data-input="z" aria-label="Move south-west">↙</button>
+          <button type="button" data-input="x" aria-label="Move south">↓</button>
+          <button type="button" data-input="c" aria-label="Move south-east">↘</button>
+        </div>
+        <div class="touch-actions" aria-label="Game actions">
+          <button type="button" data-input="1">Cleave</button>
+          <button type="button" data-input="2">Bolt</button>
+          <button type="button" data-input="g">Pick up</button>
+          <button type="button" data-input="u">Use item</button>
+          <button type="button" data-input="i">Inspect</button>
+          <button type="button" data-input="?">Help</button>
+          <button type="button" data-input="tab">Next target</button>
+          <button type="button" data-input="enter">Confirm</button>
+          <button type="button" data-input="escape">Cancel</button>
+          <button type="button" data-input="r">Restart</button>
+          <button type="button" data-input="Q">Quit</button>
+        </div>
+      </div>
+    </section>
+    <p class="hint">Click the game to focus. Move with qwe/asd/zxc or arrows; Cleave with 1; quit with Shift+Q.</p>
+    <noscript>This page requires JavaScript to connect to the game.</noscript>
+  </main>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

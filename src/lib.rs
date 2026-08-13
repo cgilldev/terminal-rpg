@@ -6,5 +6,7 @@
 pub mod app;
 pub mod game;
 pub mod server;
+pub mod session;
 pub mod ui;
+pub mod web;
 pub mod world;

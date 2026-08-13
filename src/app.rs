@@ -1,4 +1,4 @@
-//! Application configuration shared by the executable and future transports.
+//! Application configuration shared by the executable and its transports.
 
 use std::{net::SocketAddr, path::PathBuf};
 
@@ -13,6 +13,8 @@ pub enum AppMode {
     Play(PlayOptions),
     /// Listen for SSH game sessions.
     Serve(ServeOptions),
+    /// Serve independent game sessions in browser terminal viewports.
+    Web(WebOptions),
 }
 
 /// Options for a local game session.
@@ -20,6 +22,7 @@ pub enum AppMode {
 pub struct PlayOptions {
     pub seed: Option<RunSeed>,
     pub display: DisplayProfile,
+    pub debug_godmode: bool,
 }
 
 /// Options for the SSH service.
@@ -27,5 +30,16 @@ pub struct PlayOptions {
 pub struct ServeOptions {
     pub listen: SocketAddr,
     pub host_key: PathBuf,
+    pub seed: Option<RunSeed>,
     pub display: DisplayProfile,
+    pub debug_godmode: bool,
+}
+
+/// Options for the unauthenticated development web service.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct WebOptions {
+    pub listen: SocketAddr,
+    pub seed: Option<RunSeed>,
+    pub display: DisplayProfile,
+    pub debug_godmode: bool,
 }
