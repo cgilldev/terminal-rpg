@@ -8,16 +8,16 @@ expression: "terminal_text(&terminal, 80, 24)"
 │                                        ·           ││HP ██████████ 32/32     │
 │                                        ·           ││MP ██████████ 10/10     │
 │                                        ·           ││Armor 2                 │
-│                                      ▓▓·▓▓         ││1 Cleave M3 Ready       │
+│                                      ██·██         ││1 Cleave M3 Ready       │
 │                                    †·······        ││2 Grave Bolt M4 Ready   │
 │                                    ¡·······        ││3 Empty  4 Empty        │
-│                                   ▓········▓       ││5 Empty  6 Empty        │
-│                                   ▓········▓       ││7 Empty  8 Empty        │
-│                                   ▓····@···▓       ││9 Empty  0 Empty        │
-│                                   ▓········▓       ││I1 Empty  I2 Empty      │
-│                                   ▓········▓       ││I3 Empty  I4 Empty      │
+│                                   █········█       ││5 Empty  6 Empty        │
+│                                   █········█       ││7 Empty  8 Empty        │
+│                                   █····@···█       ││9 Empty  0 Empty        │
+│                                   █········█       ││I1 Empty  I2 Empty      │
+│                                   █········█       ││I3 Empty  I4 Empty      │
 │                                    ········        ││T0  Seed 6112           │
-│                                      ▓▓▓▓▓         ││Foes 0  Threat  None    │
+│                                      █████         ││Foes 0  Threat  None    │
 │                                                    ││                        │
 │                                                    ││                        │
 └────────────────────────────────────────────────────┘└────────────────────────┘

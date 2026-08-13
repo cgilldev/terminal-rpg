@@ -4,9 +4,9 @@ expression: "terminal_text(&terminal, 80, 24)"
 ---
 ┌ The Ossuary ───────────────────────────────────────┐┌ Inspect ───────────────┐
 │                                                    ││INSPECT                 │
-│                                ▓▓▓▓▓               ││42,6  VISIBLE           │
+│                                █████               ││42,6  VISIBLE           │
 │                             ··········             ││                        │
-│                            ▓··········▓            ││Crypt Floor             │
+│                            █··········█            ││Crypt Floor             │
 │                            ╬···········            ││Dust lies thick across  │
 │             ┌ Help ────────────────────────────────────────────┐ones.        │
 │             │INSPECTING                                        │             │

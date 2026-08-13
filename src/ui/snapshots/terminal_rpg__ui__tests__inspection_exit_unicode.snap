@@ -3,15 +3,15 @@ source: src/ui/mod.rs
 expression: "terminal_text(&terminal, 80, 24)"
 ---
 ┌ The Ossuary ───────────────────────────────────────┐┌ Inspect ───────────────┐
-│                                    ▓··········▓    ││INSPECT                 │
-│                                    ▓··········     ││7,16  VISIBLE           │
-│                                        ▓▓▓▓▓       ││                        │
+│                                    █··········█    ││INSPECT                 │
+│                                    █··········     ││7,16  VISIBLE           │
+│                                        █████       ││                        │
 │                                                    ││Stair to Dying Light    │
 │                                                    ││The only path out of the│
 │                                                    ││ossuary.                │
 │                                                    ││                        │
 │                                                    ││                        │
-│       >                                            ││                        │
+│       ▾                                            ││                        │
 │                                                    ││                        │
 │                                                    ││                        │
 │                                                    ││                        │

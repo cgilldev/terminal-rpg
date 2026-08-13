@@ -4,16 +4,16 @@ expression: "terminal_text(&terminal, 80, 24)"
 ---
 ┌ The Ossuary ───────────────────────────────────────┐┌ Inspect ───────────────┐
 │                                                    ││INSPECT                 │
-│                                ▓▓▓▓▓               ││35,6  VISIBLE           │
+│                                █████               ││35,6  VISIBLE           │
 │                             ··········             ││                        │
-│                            ▓··········▓            ││Crypt Floor             │
+│                            █··········█            ││Crypt Floor             │
 │                            ╬···········            ││Dust lies thick across  │
-│                            ▓··········▓            ││worn flagstones.        │
-│                          C*······@······▓          ││                        │
-│                            ▓··········▓            ││Targeted by Cultist Hex │
-│                            ▓··········▓            ││A grave-priest's        │
-│                            ▓··········             ││death-hex is fixed upon │
-│                                ▓▓▓▓▓               ││this ground.            │
+│                            █··········█            ││worn flagstones.        │
+│                          C*······@······█          ││                        │
+│                            █··········█            ││Targeted by Cultist Hex │
+│                            █··········█            ││A grave-priest's        │
+│                            █··········             ││death-hex is fixed upon │
+│                                █████               ││this ground.            │
 │                                                    ││                        │
 │                                                    ││                        │
 │                                                    ││                        │

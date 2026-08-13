@@ -4,16 +4,16 @@ expression: "terminal_text(&terminal, 80, 24)"
 ---
 ┌ The Ossuary ───────────────────────────────────────┐┌ Inspect ───────────────┐
 │                                                    ││INSPECT                 │
-│                                ▓▓▓▓▓               ││42,6  VISIBLE           │
+│                                █████               ││42,6  VISIBLE           │
 │                             ··········             ││                        │
-│                            ▓··········▓            ││Crypt Floor             │
+│                            █··········█            ││Crypt Floor             │
 │                            ╬···········            ││Dust lies thick across  │
-│                            ▓··········▓            ││worn flagstones.        │
-│                          ········@······▓          ││                        │
-│                            ▓··········▓            ││Grave Knight #0         │
-│                            ▓··········▓            ││HP 32/32  Armor 2       │
-│                            ▓··········             ││Active                  │
-│                                ▓▓▓▓▓               ││An oath-bound warrior   │
+│                            █··········█            ││worn flagstones.        │
+│                          ········@······█          ││                        │
+│                            █··········█            ││Grave Knight #0         │
+│                            █··········█            ││HP 32/32  Armor 2       │
+│                            █··········             ││Active                  │
+│                                █████               ││An oath-bound warrior   │
 │                                                    ││armored against the     │
 │                                                    ││grave.                  │
 │                                                    ││                        │

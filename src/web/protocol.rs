@@ -35,6 +35,8 @@ impl ClientCommand {
 pub(super) enum ServerCommand<'a> {
     #[serde(rename = "ready")]
     Ready { v: u8, seed: u64 },
+    #[serde(rename = "state")]
+    State { v: u8, targeting: bool },
     #[serde(rename = "error")]
     Error { v: u8, message: &'a str },
 }

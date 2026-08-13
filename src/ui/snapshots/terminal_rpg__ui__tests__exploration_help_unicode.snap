@@ -4,9 +4,9 @@ expression: "rendered_game_at(80, 24, DisplayProfile::default(), RunStatus::Acti
 ---
 ┌ The Ossuary ───────────────────────────────────────┐┌ Status ────────────────┐
 │                                                    ││GRAVE KNIGHT            │
-│                                ▓▓▓▓▓               ││                        │
+│                                █████               ││                        │
 │                             ··········             ││HP ██████████ 32/32     │
-│                            ▓··········▓            ││MP ██████████ 10/10     │
+│                            █··········█            ││MP ██████████ 10/10     │
 │                            ╬···········            ││Armor 2                 │
 │             ┌ Help ────────────────────────────────────────────┐ Ready       │
 │             │Reach >. Move qwe/asd/zxc or arrows; s waits.     │t M4 Ready   │

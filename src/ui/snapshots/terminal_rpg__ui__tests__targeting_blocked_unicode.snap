@@ -4,16 +4,16 @@ expression: "terminal_text(&terminal, 80, 24)"
 ---
 ┌ The Ossuary ───────────────────────────────────────┐┌ Target ────────────────┐
 │                                                    ││TARGETING               │
-│                                ▓▓▓▓▓               ││Grave Bolt              │
+│                                █████               ││Grave Bolt              │
 │                             ··········             ││                        │
-│                            ▓··········▓            ││Cursor 48,4             │
+│                            █··········█            ││Cursor 48,4             │
 │                            ╬···········            ││Line blocked            │
-│                            ▓··········▓            ││                        │
-│                          ··s·····@······▓          ││Move qwe/asd/zxc        │
-│                            ▓··········▓            ││or arrow keys           │
-│                            ▓··········▓            ││Tab / Shift-Tab         │
-│                            ▓··········             ││cycle targets           │
-│                                ▓▓▓▓▓               ││Enter confirms          │
+│                            █··········█            ││                        │
+│                          ··s·····@······█          ││Move qwe/asd/zxc        │
+│                            █··········█            ││or arrow keys           │
+│                            █··········█            ││Tab / Shift-Tab         │
+│                            █··········             ││cycle targets           │
+│                                █████               ││Enter confirms          │
 │                                                    ││Esc or skill cancels    │
 │                                                    ││                        │
 │                                                    ││                        │

@@ -7,6 +7,9 @@ const terminalElement = document.querySelector("#terminal");
 const touchControls = document.querySelector("#touch-controls");
 const touchToggle = document.querySelector("#touch-toggle");
 const touchHide = document.querySelector("#touch-hide");
+const actionsToggle = document.querySelector("#actions-toggle");
+const actionsMenu = document.querySelector("#actions-menu");
+const nextTargetButton = document.querySelector("#next-target");
 
 const terminal = new Terminal({
   allowProposedApi: false,
@@ -31,6 +34,7 @@ terminal.attachCustomKeyEventHandler((event) => !(event.ctrlKey || event.metaKey
 let socket = null;
 let ready = false;
 let fitting = false;
+let targeting = false;
 
 function send(message) {
   if (socket?.readyState === WebSocket.OPEN) {
@@ -38,9 +42,13 @@ function send(message) {
   }
 }
 
-function sendInput(data) {
+function sendInput(data, focus = true) {
   if (ready) send({ type: "input", data });
-  terminal.focus();
+  if (focus) terminal.focus();
+}
+
+function sendTouchInput(value) {
+  sendInput(touchInput(value), !isTouchCapable());
 }
 
 function touchInput(value) {
@@ -55,6 +63,17 @@ function setTouchControlsVisible(visible) {
 
 function isTouchCapable() {
   return navigator.maxTouchPoints > 0 || matchMedia("(pointer: coarse)").matches;
+}
+
+function setTargeting(active) {
+  targeting = active;
+  nextTargetButton.disabled = !active;
+  nextTargetButton.setAttribute("aria-disabled", String(!active));
+}
+
+function setActionsMenuVisible(visible) {
+  actionsMenu.hidden = !visible;
+  actionsToggle.setAttribute("aria-expanded", String(visible));
 }
 
 function fit() {
@@ -78,6 +97,7 @@ function connect() {
   statusElement.textContent = "Connecting…";
   terminal.reset();
   fitAddon.fit();
+  setTargeting(false);
   const scheme = location.protocol === "https:" ? "wss" : "ws";
   socket = new WebSocket(`${scheme}://${location.host}/ws`);
   socket.binaryType = "arraybuffer";
@@ -97,6 +117,8 @@ function connect() {
       terminal.options.disableStdin = false;
       statusElement.textContent = `Connected · seed ${message.seed}`;
       terminal.focus();
+    } else if (message.type === "state") {
+      setTargeting(Boolean(message.targeting));
     } else if (message.type === "error") {
       showDisconnected(message.message || "Connection error");
     }
@@ -117,9 +139,12 @@ terminalElement.addEventListener("click", () => terminal.focus());
 reconnectButton.addEventListener("click", connect);
 touchToggle.addEventListener("click", () => setTouchControlsVisible(touchControls.hidden));
 touchHide.addEventListener("click", () => setTouchControlsVisible(false));
+actionsToggle.addEventListener("click", () => setActionsMenuVisible(actionsMenu.hidden));
 touchControls.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-input]");
-  if (button) sendInput(touchInput(button.dataset.input));
+  if (button && !(button.dataset.input === "tab" && !targeting)) {
+    sendTouchInput(button.dataset.input);
+  }
 });
 matchMedia("(pointer: coarse)").addEventListener("change", (event) => {
   if (event.matches) setTouchControlsVisible(true);

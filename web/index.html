@@ -37,18 +37,23 @@
           <button type="button" data-input="x" aria-label="Move south">↓</button>
           <button type="button" data-input="c" aria-label="Move south-east">↘</button>
         </div>
-        <div class="touch-actions" aria-label="Game actions">
-          <button type="button" data-input="1">Cleave</button>
-          <button type="button" data-input="2">Bolt</button>
-          <button type="button" data-input="g">Pick up</button>
-          <button type="button" data-input="u">Use item</button>
-          <button type="button" data-input="i">Inspect</button>
-          <button type="button" data-input="?">Help</button>
-          <button type="button" data-input="tab">Next target</button>
-          <button type="button" data-input="enter">Confirm</button>
-          <button type="button" data-input="escape">Cancel</button>
-          <button type="button" data-input="r">Restart</button>
-          <button type="button" data-input="Q">Quit</button>
+        <div class="touch-actions">
+          <button id="actions-toggle" type="button" aria-expanded="false" aria-controls="actions-menu">Actions</button>
+          <div id="actions-menu" class="actions-menu" hidden>
+            <div class="touch-actions-grid" aria-label="Game actions">
+              <button type="button" data-input="1">Cleave</button>
+              <button type="button" data-input="2">Bolt</button>
+              <button type="button" data-input="g">Pick up</button>
+              <button type="button" data-input="u">Use item</button>
+              <button type="button" data-input="i">Inspect</button>
+              <button type="button" data-input="?">Help</button>
+              <button type="button" data-input="tab" id="next-target" disabled>Next target</button>
+              <button type="button" data-input="enter">Confirm</button>
+              <button type="button" data-input="escape">Cancel</button>
+              <button type="button" data-input="r">Restart</button>
+              <button type="button" data-input="Q">Quit</button>
+            </div>
+          </div>
         </div>
       </div>
     </section>

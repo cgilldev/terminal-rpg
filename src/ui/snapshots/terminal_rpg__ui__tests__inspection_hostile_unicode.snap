@@ -4,16 +4,16 @@ expression: "terminal_text(&terminal, 80, 24)"
 ---
 ┌ The Ossuary ───────────────────────────────────────┐┌ Inspect ───────────────┐
 │                                                    ││INSPECT                 │
-│                                ▓▓▓▓▓               ││34,6  VISIBLE           │
+│                                █████               ││34,6  VISIBLE           │
 │                             ··········             ││                        │
-│                            ▓··········▓            ││Crypt Floor             │
+│                            █··········█            ││Crypt Floor             │
 │                            ╬···········            ││Dust lies thick across  │
-│                            ▓··········▓            ││worn flagstones.        │
-│                          G·······@······▓          ││                        │
-│                            ▓··········▓            ││Ghoul #10               │
-│                            ▓··········▓            ││HP 14/14  Armor 1       │
-│                            ▓··········             ││Active                  │
-│                                ▓▓▓▓▓               ││A ravenous corpse poised│
+│                            █··········█            ││worn flagstones.        │
+│                          G·······@······█          ││                        │
+│                            █··········█            ││Ghoul #10               │
+│                            █··········█            ││HP 14/14  Armor 1       │
+│                            █··········             ││Active                  │
+│                                █████               ││A ravenous corpse poised│
 │                                                    ││to lunge.               │
 │                                                    ││                        │
 │                                                    ││Ghoul Lunge             │

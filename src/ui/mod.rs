@@ -188,11 +188,14 @@ pub fn draw_game(frame: &mut Frame<'_>, game: &ExplorationGame, profile: Display
     );
 
     if game.character_info {
+        let lines = character_info_lines(game, profile);
+        let popup = centered_popup(area, &lines);
+        frame.render_widget(Clear, popup);
         frame.render_widget(
-            Paragraph::new(character_info_lines(game, profile))
+            Paragraph::new(lines)
                 .block(panel(" Character ", profile))
                 .wrap(Wrap { trim: true }),
-            area,
+            popup,
         );
         return;
     }
@@ -804,13 +807,15 @@ fn exploration_base_cell(
         }
         return match game.map.tile(position) {
             Some(Tile::Wall) if profile.ascii => ('#', SemanticTone::Wall),
-            Some(Tile::Wall) => ('▓', SemanticTone::Wall),
+            Some(Tile::Wall) => ('█', SemanticTone::Wall),
             Some(Tile::Floor) if profile.ascii => ('.', SemanticTone::Floor),
             Some(Tile::Floor) => ('·', SemanticTone::Floor),
             Some(Tile::ClosedDoor) if profile.ascii => ('+', SemanticTone::Door),
             Some(Tile::ClosedDoor) => ('╬', SemanticTone::Door),
-            Some(Tile::OpenDoor) => ('/', SemanticTone::Door),
-            Some(Tile::Exit) => ('>', SemanticTone::Exit),
+            Some(Tile::OpenDoor) if profile.ascii => ('/', SemanticTone::Door),
+            Some(Tile::OpenDoor) => ('╱', SemanticTone::Door),
+            Some(Tile::Exit) if profile.ascii => ('>', SemanticTone::Exit),
+            Some(Tile::Exit) => ('▾', SemanticTone::Exit),
             None => (' ', SemanticTone::Plain),
         };
     }
@@ -884,6 +889,29 @@ fn panel(title: impl Into<Line<'static>>, profile: DisplayProfile) -> Block<'sta
     }
 }
 
+/// A centered popup `Rect` sized to fit `lines` plus a border, clamped to
+/// `area` so it never overflows the frame at the minimum supported size.
+fn centered_popup(area: Rect, lines: &[Line<'static>]) -> Rect {
+    let content_width = lines
+        .iter()
+        .map(|line| u16::try_from(line.width()).unwrap_or_default())
+        .max()
+        .unwrap_or_default();
+    let popup_width = content_width
+        .saturating_add(2)
+        .clamp(2, area.width.saturating_sub(1));
+    let content_height = u16::try_from(lines.len()).unwrap_or_default();
+    let popup_height = content_height
+        .saturating_add(2)
+        .clamp(2, area.height.saturating_sub(1));
+    Rect::new(
+        area.x + (area.width.saturating_sub(popup_width)) / 2,
+        area.y + (area.height.saturating_sub(popup_height)) / 2,
+        popup_width,
+        popup_height,
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -921,6 +949,17 @@ mod tests {
             game.player.health = 0;
             game.events.push("The Grave Knight falls.".into());
         }
+        terminal
+            .draw(|frame| draw_game(frame, &game, profile))
+            .unwrap();
+        terminal
+    }
+
+    fn character_terminal(profile: DisplayProfile) -> Terminal<TestBackend> {
+        let mut terminal = Terminal::new(TestBackend::new(80, 24)).unwrap();
+        let mut game = ExplorationGame::new(Some(RunSeed(0xD4_4B))).unwrap();
+        game.start();
+        game.character_info = true;
         terminal
             .draw(|frame| draw_game(frame, &game, profile))
             .unwrap();
@@ -992,6 +1031,74 @@ mod tests {
             assert!(rendered.contains("Test Warden") || rendered.contains("TEST WARDEN"));
             assert!(!rendered.contains("Grave Knight"));
         }
+    }
+
+    fn map_tile_glyphs(profile: DisplayProfile) -> Vec<&'static str> {
+        let mut glyphs = if profile.ascii {
+            vec!["#", ".", "+", "/", ">"]
+        } else {
+            vec!["█", "·", "╬", "╱", "▾"]
+        };
+        glyphs.extend(if profile.ascii {
+            ["%", ","]
+        } else {
+            ["░", ","]
+        });
+        glyphs
+    }
+
+    #[test]
+    fn character_menu_popup_hides_the_map_beneath_it() {
+        let profiles = [
+            DisplayProfile::default(),
+            DisplayProfile {
+                ascii: true,
+                no_color: true,
+            },
+        ];
+        for profile in profiles {
+            let glyphs = map_tile_glyphs(profile);
+            let normal = game_terminal_at(80, 24, profile, RunStatus::Active, false);
+            let popup = character_terminal(profile);
+            let normal_buffer = normal.backend().buffer();
+            let popup_buffer = popup.backend().buffer();
+            let mut game = ExplorationGame::new(Some(RunSeed(0xD4_4B))).unwrap();
+            game.start();
+            game.character_info = true;
+            let lines = character_info_lines(&game, profile);
+            let rect = centered_popup(Rect::new(0, 0, 80, 24), &lines);
+            for y in rect.y..rect.y + rect.height {
+                for x in rect.x..rect.x + rect.width {
+                    let before = normal_buffer[(x, y)].symbol();
+                    if glyphs.contains(&before) {
+                        assert_ne!(
+                            popup_buffer[(x, y)].symbol(),
+                            before,
+                            "map tile {before:?} shows through character popup at ({x},{y}) in {profile:?}"
+                        );
+                    }
+                }
+            }
+            let rendered = terminal_text(&popup, 80, 24);
+            assert!(rendered.contains("Abilities:"));
+            assert!(rendered.contains("Tab closes"));
+        }
+    }
+
+    #[test]
+    fn character_menu_profiles_are_snapshot_tested() {
+        let ascii = DisplayProfile {
+            ascii: true,
+            no_color: true,
+        };
+        insta::assert_snapshot!(
+            "character_menu_unicode",
+            terminal_text(&character_terminal(DisplayProfile::default()), 80, 24)
+        );
+        insta::assert_snapshot!(
+            "character_menu_ascii",
+            terminal_text(&character_terminal(ascii), 80, 24)
+        );
     }
 
     fn rendered_enemy_showcase(profile: DisplayProfile) -> String {
@@ -1702,7 +1809,7 @@ mod tests {
             ("s", Color::White),
             ("G", Color::LightRed),
             ("C", Color::LightMagenta),
-            ("▓", Color::DarkGray),
+            ("█", Color::DarkGray),
         ] {
             assert!(
                 showcase

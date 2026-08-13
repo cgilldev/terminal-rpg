@@ -4,9 +4,9 @@ expression: "terminal_text(&terminal, 80, 24)"
 ---
 ┌ The Ossuary ───────────────────────────────────────┐┌ Target ────────────────┐
 │                                                    ││TARGETING               │
-│                                ▓▓▓▓▓               ││Grave Bolt              │
+│                                █████               ││Grave Bolt              │
 │                             ··········             ││                        │
-│                            ▓··········▓            ││Cursor 36,6             │
+│                            █··········█            ││Cursor 36,6             │
 │                            ╬···········            ││Valid foe #10           │
 │             ┌ Help ────────────────────────────────────────────┐             │
 │             │TARGETING                                         │d/zxc        │

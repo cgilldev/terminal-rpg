@@ -139,6 +139,25 @@ class WebSocketClient:
             elif opcode == 8:
                 raise RuntimeError("session closed before expected output")
 
+    def wait_for_state(self, targeting: bool) -> None:
+        deadline = time.monotonic() + 4
+        while time.monotonic() < deadline:
+            try:
+                opcode, payload = self.receive_frame()
+            except TimeoutError:
+                continue
+            if opcode == 2:
+                self.output.extend(payload)
+            elif opcode == 1:
+                message = json.loads(payload)
+                if message.get("type") == "error":
+                    raise RuntimeError(message.get("message", "protocol error"))
+                if message.get("type") == "state" and bool(message.get("targeting")) is targeting:
+                    return
+            elif opcode == 8:
+                raise RuntimeError("session closed before targeting state")
+        raise TimeoutError(f"browser session never reported targeting={targeting}")
+
     def resize(self, columns: int, rows: int) -> None:
         self.send_json({"type": "resize", "cols": columns, "rows": rows})
 
@@ -199,9 +218,9 @@ def verify_touch_ui(url: str) -> None:
         script = response.read()
     with urllib.request.urlopen(f"{base}/app.css", timeout=4) as response:
         styles = response.read()
-    required_page = (b'id="touch-controls"', b'data-input="q"', b'data-input="tab"', b'data-input="enter"', b'data-input="escape"')
-    required_script = (b"navigator.maxTouchPoints", b"pointer: coarse", b"function sendInput", b"function touchInput", b"touchControls.addEventListener")
-    required_styles = (b".touch-pad", b".touch-actions", b"orientation: landscape", b"min-height: 2.75rem")
+    required_page = (b'id="touch-controls"', b'id="actions-toggle"', b'id="actions-menu"', b'id="next-target"', b'data-input="q"', b'data-input="tab"', b'data-input="enter"', b'data-input="escape"')
+    required_script = (b"navigator.maxTouchPoints", b"pointer: coarse", b"function sendInput", b"function sendTouchInput", b"function touchInput", b"touchControls.addEventListener", b"!isTouchCapable()", b"function setTargeting", b'message.type === "state"', b"actionsToggle.addEventListener", b'button.dataset.input === "tab"', b"nextTargetButton.disabled")
+    required_styles = (b".touch-pad", b".touch-actions", b".actions-menu", b"isolation: isolate", b"orientation: landscape", b"min-height: 2.75rem")
     if not all(marker in page for marker in required_page):
         raise RuntimeError("browser page lacks the complete touch control overlay")
     if not all(marker in script for marker in required_script):
@@ -260,6 +279,7 @@ def main() -> int:
 
     moving.input("2")
     moving.wait_for_screen("TARGETING")
+    moving.wait_for_state(True)
     moving.input("\x1b")
     moving.input("[C")
     moving.wait_for_screen("TARGETING")
@@ -337,9 +357,11 @@ def main() -> int:
     reconnect = WebSocketClient(args.host, args.port)
     reconnect.input("2")
     reconnect.wait_for_screen("TARGETING")
+    reconnect.wait_for_state(True)
     reconnect.reset_capture()
     reconnect.input("\x1b")
     reconnect.wait_for_screen("GRAVE KNIGHT")
+    reconnect.wait_for_state(False)
     reconnect.send_json({"type": "quit"})
     reconnect.wait_for_close()
     fetch_page(base_url)

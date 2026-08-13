@@ -4,12 +4,12 @@ expression: "rendered_game(DisplayProfile::default(), RunStatus::Death)"
 ---
 ┌ The Ossuary ───────────────────────────────────────┐┌ Status ────────────────┐
 │                                                    ││GRAVE KNIGHT            │
-│                                ▓▓▓▓▓               ││                        │
+│                                █████               ││                        │
 │                             ··········             ││HP ░░░░░░░░░░ 0/32      │
-│                            ▓··········▓            ││MP ██████████ 10/10     │
+│                            █··········█            ││MP ██████████ 10/10     │
 │                            ╬···········            ││Armor 2                 │
-│                            ▓··········▓            ││1 Cleave M3 Ready       │
-│                          ········@······▓          ││2 Grave Bolt M4 Ready   │
+│                            █··········█            ││1 Cleave M3 Ready       │
+│                          ········@······█          ││2 Grave Bolt M4 Ready   │
 │                 ┌ Death ───────────────────────────────────┐  4 Empty        │
 │                 │YOU DIED                                  │  6 Empty        │
 │                 │                                          │  8 Empty        │

@@ -163,6 +163,8 @@ async fn session(
     };
 
     let mut decoder = InputDecoder::default();
+    let mut targeting = false;
+    sync_game_state(&output_sender, &game, &mut targeting).await;
     loop {
         let message = if decoder.has_pending_escape() {
             tokio::select! {
@@ -173,6 +175,7 @@ async fn session(
                     {
                         let _ = draw(&mut terminal, &game, display);
                     }
+                    sync_game_state(&output_sender, &game, &mut targeting).await;
                     continue;
                 }
             }
@@ -226,6 +229,7 @@ async fn session(
             send_protocol_error(&output_sender, message).await;
             break;
         }
+        sync_game_state(&output_sender, &game, &mut targeting).await;
         if close {
             let _ = terminal.backend_mut().show_cursor();
             let _ = output_sender.send(Outbound::Close).await;
@@ -340,6 +344,23 @@ fn draw(
 ) -> io::Result<()> {
     terminal.draw(|frame| draw_game(frame, game, display))?;
     Ok(())
+}
+
+async fn sync_game_state(
+    sender: &mpsc::Sender<Outbound>,
+    game: &ExplorationGame,
+    targeting: &mut bool,
+) {
+    let active = game.targeting.is_some();
+    if active != *targeting {
+        *targeting = active;
+        let serialized = serde_json::to_string(&ServerCommand::State {
+            v: PROTOCOL_VERSION,
+            targeting: active,
+        })
+        .expect("server protocol is serializable");
+        let _ = sender.send(Outbound::Text(serialized)).await;
+    }
 }
 
 async fn send_protocol_error(sender: &mpsc::Sender<Outbound>, message: &'static str) {
@@ -604,5 +625,73 @@ mod tests {
         assert!(game.targeting.is_none());
         assert_eq!(isolated.targeting, None);
         assert_eq!(isolated.turn, 0);
+    }
+
+    #[tokio::test]
+    async fn targeting_state_is_announced_only_when_it_changes() {
+        let (sender, mut receiver) = mpsc::channel(128);
+        let mut game = (0..500)
+            .find_map(|seed| {
+                let mut game = ExplorationGame::new(Some(crate::game::RunSeed(seed))).unwrap();
+                game.start();
+                game.hostiles
+                    .iter()
+                    .any(|actor| {
+                        matches!(
+                            game.target_validity(
+                                crate::game::AbilitySlot::new(2).unwrap(),
+                                actor.position
+                            ),
+                            crate::game::TargetValidity::Valid(_)
+                        )
+                    })
+                    .then_some(game)
+            })
+            .expect("representative seeds contain a valid Grave Bolt target");
+        let mut targeting = false;
+        sync_game_state(&sender, &game, &mut targeting).await;
+        let consume = |receiver: &mut mpsc::Receiver<Outbound>| {
+            let mut announced = Vec::new();
+            while let Ok(outbound) = receiver.try_recv() {
+                if let Outbound::Text(text) = outbound {
+                    let value: serde_json::Value = serde_json::from_str(&text).unwrap();
+                    assert_eq!(value["v"], PROTOCOL_VERSION);
+                    assert_eq!(value["type"], "state");
+                    announced.push(value["targeting"].as_bool().unwrap());
+                }
+            }
+            announced
+        };
+        assert!(
+            consume(&mut receiver).is_empty(),
+            "initial state must not be re-announced"
+        );
+
+        crate::session::apply_game_intent(
+            &mut game,
+            crate::session::Intent::UseSkill(crate::game::AbilitySlot::new(2).unwrap()),
+        )
+        .unwrap();
+        assert!(game.targeting.is_some());
+        sync_game_state(&sender, &game, &mut targeting).await;
+        assert_eq!(
+            consume(&mut receiver),
+            vec![true],
+            "entering targeting announces true"
+        );
+        sync_game_state(&sender, &game, &mut targeting).await;
+        assert!(
+            consume(&mut receiver).is_empty(),
+            "no re-announce while stable"
+        );
+
+        crate::session::apply_game_intent(&mut game, crate::session::Intent::CancelMode).unwrap();
+        assert!(game.targeting.is_none());
+        sync_game_state(&sender, &game, &mut targeting).await;
+        assert_eq!(
+            consume(&mut receiver),
+            vec![false],
+            "leaving targeting announces false"
+        );
     }
 }
