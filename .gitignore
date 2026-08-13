@@ -11,5 +11,19 @@ AGENTS.md.bootstrap-backup.*
 # Local development SSH host key.
 .terminal-rpg/
 
+# Cloudflare tunnel config and credentials (contains tunnel ID, hostname, secret).
+deploy/cloudflared-rpg.yml
+deploy/*.json
+*.cloudflared*
+
+# Environment / secret files.
+.env
+.env.*
+!.env.example
+
 # Rust build output.
 /target/
+
+# Python bytecode.
+__pycache__/
+*.pyc
