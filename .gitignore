@@ -6,7 +6,6 @@ AGENTS.md.bootstrap-backup.*
 .gitignore.bootstrap-backup.*
 .codex/skills.bootstrap-backup.*
 .codex/skills/*.bootstrap-backup.*
-*snapshots/*
 # END local-agent-workflow
 
 # Local development SSH host key.
